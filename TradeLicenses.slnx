@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="TradeLicenses/TradeLicenses.csproj" />
-  <Project Path="TradeLicensesDTO/TradeLicensesDTO.csproj" />
-  <Project Path="TradeLicensesModels/TradeLicensesModels.csproj" />
-  <Project Path="TradeLicensesServiceContracts/TradeLicensesIServiceContracts.csproj" />
-  <Project Path="TradeLicensesServices/TradeLicensesServices.csproj" />
-</Solution>
