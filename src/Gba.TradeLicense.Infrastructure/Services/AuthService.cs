@@ -26,9 +26,12 @@ public sealed class AuthService : IAuthService
     public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var u = await _db.Users
-            .Include(x => x.UserRoles).ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(x =>
-                x.Phone == request.UsernameOrPhone || x.Email == request.UsernameOrPhone, ct);
+    .Include(x => x.UserRoles)
+        .ThenInclude(ur => ur.Role)
+    .FirstOrDefaultAsync(x =>
+        x.Phone == request.UsernameOrPhone ||
+        x.Email == request.UsernameOrPhone, ct);
+
 
         if (u is null || !u.IsActive)
             return new(false, null, "Invalid credentials.", false);

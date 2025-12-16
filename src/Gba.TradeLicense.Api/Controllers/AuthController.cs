@@ -1,140 +1,72 @@
-﻿using Gba.TradeLicense.Application.Abstractions;
-using Gba.TradeLicense.Application.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+﻿using Gba.TradeLicense.Application.Models;
+using Gba.TradeLicense.Application.Abstractions;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Gba.TradeLicense.Infrastructure.Services;
-
-public sealed class AuthService : IAuthService
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
 {
-    private readonly IConfiguration _config;
+    private readonly IAuthService _authService;
 
-    // in-memory OTP store for testing
-    private static readonly Dictionary<string, DateTime> _otpExpiry = new();
-
-    public AuthService(IConfiguration config)
+    public AuthController(IAuthService authService)
     {
-        _config = config;
+        _authService = authService;
     }
 
-    public Task<LoginResult> LoginAsync(LoginRequest req, CancellationToken ct)
+    // ----------------- Login -----------------
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        // 🔴 TEST USERS ONLY
+        if (request == null || string.IsNullOrWhiteSpace(request.UsernameOrPhone) || string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest(new { Error = "Username/Phone and Password are required." });
 
-        // Trader → direct login
-        if (req.UsernameOrPhone == "9999999999" && req.Password == "123456")
+        var result = await _authService.LoginAsync(request, ct);
+
+        if (!result.Success && !result.OtpRequired)
+            return Unauthorized(new { result.Error });
+
+        return Ok(new
         {
-            return Task.FromResult(
-                new LoginResult(
-                    Success: true,
-                    AccessToken: GenerateJwt("trader@gba.gov", "Trader"),
-                    Error: null,
-                    OtpRequired: false
-                )
-            );
-        }
-
-        // Approver → OTP required
-        if (req.UsernameOrPhone == "9999999998" && req.Password == "123456")
-        {
-            return Task.FromResult(
-                new LoginResult(
-                    Success: true,
-                    AccessToken: null,
-                    Error: null,
-                    OtpRequired: true
-                )
-            );
-        }
-
-        return Task.FromResult(
-            new LoginResult(
-                Success: false,
-                AccessToken: null,
-                Error: "Invalid username or password",
-                OtpRequired: false
-            )
-        );
+            result.Success,
+            result.AccessToken,
+            result.OtpRequired,
+            result.Error
+        });
     }
 
-    public Task<OtpSendResult> SendOtpAsync(OtpSendRequest req, CancellationToken ct)
+    // ----------------- Send OTP -----------------
+    [HttpPost("send-otp")]
+    public async Task<IActionResult> SendOtp([FromBody] OtpSendRequest request, CancellationToken ct)
     {
-        // mock OTP = 123456 valid for 10 minutes
-        _otpExpiry[req.Phone] = DateTime.UtcNow.AddMinutes(10);
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Purpose))
+            return BadRequest(new { Error = "Phone and Purpose are required." });
 
-        return Task.FromResult(
-            new OtpSendResult(
-                Success: true,
-                Message: $"OTP sent for {req.Purpose} (use 123456 for testing)"
-            )
-        );
+        var result = await _authService.SendOtpAsync(request, ct);
+
+        return Ok(new
+        {
+            result.Success,
+            result.Message
+        });
     }
 
-    public Task<OtpVerifyResult> VerifyOtpAsync(OtpVerifyRequest req, CancellationToken ct)
+    // ----------------- Verify OTP -----------------
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] OtpVerifyRequest request, CancellationToken ct)
     {
-        if (req.Otp != "123456")
+        if (request == null || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Otp))
+            return BadRequest(new { Error = "Phone and OTP are required." });
+
+        var result = await _authService.VerifyOtpAsync(request, ct);
+
+        if (!result.Success)
+            return Unauthorized(new { result.Error });
+
+        return Ok(new
         {
-            return Task.FromResult(
-                new OtpVerifyResult(
-                    Success: false,
-                    AccessToken: null,
-                    Error: "Invalid OTP"
-                )
-            );
-        }
-
-        if (!_otpExpiry.TryGetValue(req.Phone, out var expiry) || expiry < DateTime.UtcNow)
-        {
-            return Task.FromResult(
-                new OtpVerifyResult(
-                    Success: false,
-                    AccessToken: null,
-                    Error: "OTP expired"
-                )
-            );
-        }
-
-        return Task.FromResult(
-            new OtpVerifyResult(
-                Success: true,
-                AccessToken: GenerateJwt("approver@gba.gov", "Approver"),
-                Error: null
-            )
-        );
-    }
-
-    // ---------------- JWT ----------------
-
-    private string GenerateJwt(string email, string role)
-    {
-        var jwt = _config.GetSection("Jwt");
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(ClaimTypes.Role, role)
-        };
-
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwt["Key"]!)
-        );
-
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: jwt["Issuer"],
-            audience: jwt["Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                int.Parse(jwt["AccessTokenMinutes"]!)
-            ),
-            signingCredentials: creds
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+            result.Success,
+            result.AccessToken,
+            result.Error
+        });
     }
 }

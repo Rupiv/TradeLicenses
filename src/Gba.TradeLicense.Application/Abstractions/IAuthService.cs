@@ -7,4 +7,6 @@ public interface IAuthService
     Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken ct);
     Task<OtpSendResult> SendOtpAsync(OtpSendRequest request, CancellationToken ct);
     Task<OtpVerifyResult> VerifyOtpAsync(OtpVerifyRequest request, CancellationToken ct);
+
+   
 }

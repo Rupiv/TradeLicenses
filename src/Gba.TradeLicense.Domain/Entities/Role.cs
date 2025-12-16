@@ -1,7 +1,9 @@
 namespace Gba.TradeLicense.Domain.Entities;
 
-public sealed class Role : BaseEntity
+public class Role
 {
-    public string Name { get; set; } = "";
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = null!;
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }
+

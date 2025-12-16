@@ -1,25 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Gba.TradeLicense.Domain\Gba.TradeLicense.Domain.csproj" />
 		<ProjectReference Include="..\Gba.TradeLicense.Application\Gba.TradeLicense.Application.csproj" />
 
 		<!-- EF Core (ALL SAME VERSION) -->
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 
 		<!-- Identity -->
-		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="8.0.8" />
 	</ItemGroup>
-
 </Project>

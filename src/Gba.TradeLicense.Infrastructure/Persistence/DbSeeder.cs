@@ -82,5 +82,6 @@ public static class DbSeeder
             existing.UserRoles.Add(new UserRole { UserId = existing.Id, RoleId = r.Id });
             await db.SaveChangesAsync(ct);
         }
+
     }
 }

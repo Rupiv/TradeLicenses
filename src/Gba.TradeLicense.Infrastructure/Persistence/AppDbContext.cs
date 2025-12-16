@@ -9,6 +9,7 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
+
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
     public DbSet<TradeApplication> TradeApplications => Set<TradeApplication>();
