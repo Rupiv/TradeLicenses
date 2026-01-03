@@ -8,7 +8,7 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(AppDbContext db, CancellationToken ct)
     {
-        await db.Database.MigrateAsync(ct);
+        //await db.Database.MigrateAsync(ct);
 
         var roles = new[] { "Trader", "Approver", "SeniorApprover", "Admin" };
         foreach (var r in roles)
