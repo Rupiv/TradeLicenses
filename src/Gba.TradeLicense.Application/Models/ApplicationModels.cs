@@ -13,3 +13,9 @@ public sealed record ApplicationCreateResult(bool Success, string? ApplicationNo
 public sealed record ApplicationStatusResult(bool Success, string? ApplicationNo, string? Status, object? History, string? Error);
 
 public sealed record ApplicationSubmitResult(bool Success, string? Status, string? Error);
+public sealed record ApplicationStatusCountDto(
+    int LicenceApplicationStatusID,
+    string LicenceApplicationStatusName,
+    int TotalApplications
+);
+

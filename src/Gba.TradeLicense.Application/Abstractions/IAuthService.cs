@@ -1,12 +1,25 @@
 using Gba.TradeLicense.Application.Models;
 
-namespace Gba.TradeLicense.Application.Abstractions;
-
 public interface IAuthService
 {
-    Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken ct);
-    Task<OtpSendResult> SendOtpAsync(OtpSendRequest request, CancellationToken ct);
-    Task<OtpVerifyResult> VerifyOtpAsync(OtpVerifyRequest request, CancellationToken ct);
+    // Login with credentials + server-captured metadata
+    Task<LoginResult> LoginAsync(
+        string usernameOrPhone,
+        string password,
+        string ipAddress,
+        string browser,
+        CancellationToken ct
+    );
 
-   
+    // Send OTP
+    Task<OtpSendResult> SendOtpAsync(
+        OtpSendRequest request,
+        CancellationToken ct
+    );
+
+    // Verify OTP
+    Task<OtpVerifyResult> VerifyOtpAsync(
+        OtpVerifyRequest request,
+        CancellationToken ct
+    );
 }
