@@ -4,6 +4,17 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Include="obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs" />
+	  <Compile Include="obj\Debug\net8.0\Gba.TradeLicense.Api.AssemblyInfo.cs" />
+	  <Compile Include="obj\Debug\net8.0\Gba.TradeLicense.Api.GlobalUsings.g.cs" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="obj\Debug\net8.0\rpswa.dswa.cache.json" />
+	  <Content Include="obj\Debug\net8.0\staticwebassets.removed.txt" />
+	  <Content Include="obj\Gba.TradeLicense.Api.csproj.nuget.dgspec.json" />
+	  <Content Include="obj\project.assets.json" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Gba.TradeLicense.Domain\Gba.TradeLicense.Domain.csproj" />
@@ -18,5 +29,22 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" PrivateAssets="all" />
 
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="bin\Debug\net8.0\" />
+	  <Folder Include="obj\Debug\net8.0\refint\" />
+	  <Folder Include="obj\Debug\net8.0\ref\" />
+	  <Folder Include="obj\Debug\net8.0\staticwebassets\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="obj\Debug\net8.0\Gba.TradeLicense.Api.AssemblyInfoInputs.cache" />
+	  <None Include="obj\Debug\net8.0\Gba.TradeLicense.Api.assets.cache" />
+	  <None Include="obj\Debug\net8.0\Gba.TradeLicense.Api.csproj.AssemblyReference.cache" />
+	  <None Include="obj\Debug\net8.0\Gba.TradeLicense.Api.GeneratedMSBuildEditorConfig.editorconfig" />
+	  <None Include="obj\Gba.TradeLicense.Api.csproj.nuget.g.props" />
+	  <None Include="obj\Gba.TradeLicense.Api.csproj.nuget.g.targets" />
+	  <None Include="obj\project.nuget.cache" />
 	</ItemGroup>
 </Project>
