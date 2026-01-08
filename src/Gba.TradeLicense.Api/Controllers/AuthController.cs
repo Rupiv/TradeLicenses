@@ -17,10 +17,25 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.UsernameOrPhone) || string.IsNullOrWhiteSpace(request.Password))
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.UsernameOrPhone) ||
+            string.IsNullOrWhiteSpace(request.Password))
+        {
             return BadRequest(new { Error = "Username/Phone and Password are required." });
+        }
 
-        var result = await _authService.LoginAsync(request, ct);
+        // ✅ Capture IP & Browser SERVER-SIDE (trusted)
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "UNKNOWN";
+        var browser = Request.Headers["User-Agent"].ToString();
+
+        // Call service with credentials + server metadata
+        var result = await _authService.LoginAsync(
+            request.UsernameOrPhone,
+            request.Password,
+            ipAddress,
+            browser,
+            ct
+        );
 
         if (!result.Success && !result.OtpRequired)
             return Unauthorized(new { result.Error });
@@ -38,8 +53,12 @@ public class AuthController : ControllerBase
     [HttpPost("send-otp")]
     public async Task<IActionResult> SendOtp([FromBody] OtpSendRequest request, CancellationToken ct)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Purpose))
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Phone) ||
+            string.IsNullOrWhiteSpace(request.Purpose))
+        {
             return BadRequest(new { Error = "Phone and Purpose are required." });
+        }
 
         var result = await _authService.SendOtpAsync(request, ct);
 
@@ -54,8 +73,12 @@ public class AuthController : ControllerBase
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] OtpVerifyRequest request, CancellationToken ct)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.Phone) || string.IsNullOrWhiteSpace(request.Otp))
+        if (request == null ||
+            string.IsNullOrWhiteSpace(request.Phone) ||
+            string.IsNullOrWhiteSpace(request.Otp))
+        {
             return BadRequest(new { Error = "Phone and OTP are required." });
+        }
 
         var result = await _authService.VerifyOtpAsync(request, ct);
 

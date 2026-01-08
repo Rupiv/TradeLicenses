@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 {
     opt.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Services
 builder.Services.AddSingleton<JwtTokenService>();
@@ -111,11 +112,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// DB migrate + seed on startup
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db, CancellationToken.None);
-}
+
 
 app.Run();

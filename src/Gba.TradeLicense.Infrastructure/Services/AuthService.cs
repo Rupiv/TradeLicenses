@@ -1,129 +1,153 @@
+﻿using System.Data;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Application.Models;
-using Gba.TradeLicense.Domain.Entities;
-using Gba.TradeLicense.Infrastructure.Persistence;
 using Gba.TradeLicense.Infrastructure.Security;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Gba.TradeLicense.Infrastructure.Services;
 
 public sealed class AuthService : IAuthService
 {
-    private readonly AppDbContext _db;
-    private readonly JwtTokenService _jwt;
     private readonly IConfiguration _config;
-    private readonly PasswordHasher<User> _hasher = new();
+    private readonly JwtTokenService _jwt;
+    private readonly string _connStr;
 
-    public AuthService(AppDbContext db, JwtTokenService jwt, IConfiguration config)
+    public AuthService(IConfiguration config, JwtTokenService jwt)
     {
-        _db = db;
-        _jwt = jwt;
         _config = config;
+        _jwt = jwt;
+
+        _connStr = _config.GetConnectionString("Default")
+            ?? throw new InvalidOperationException("Connection string 'Default' not found.");
     }
 
-    public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken ct)
+    private IDbConnection CreateConnection()
+        => new SqlConnection(_connStr);
+
+    // ================= LOGIN =================
+    public async Task<LoginResult> LoginAsync(
+        string usernameOrPhone,
+        string password,
+        string ipAddress,
+        string browser,
+        CancellationToken ct)
     {
-        var u = await _db.Users
-    .Include(x => x.UserRoles)
-        .ThenInclude(ur => ur.Role)
-    .FirstOrDefaultAsync(x =>
-        x.Phone == request.UsernameOrPhone ||
-        x.Email == request.UsernameOrPhone, ct);
+        using var db = CreateConnection();
 
+        var result = await db.QueryFirstOrDefaultAsync<LoginSpResult>(
+            "usp_LoginUser",
+            new
+            {
+                UsernameOrPhone = usernameOrPhone,
+                Password = password,
+                LoginIP = ipAddress,
+                BrowserType = browser
+            },
+            commandType: CommandType.StoredProcedure
+        );
 
-        if (u is null || !u.IsActive)
-            return new(false, null, "Invalid credentials.", false);
+        if (result == null || !result.Success)
+        {
+            return new LoginResult(
+                Success: false,
+                AccessToken: null,
+                Error: result?.Message ?? "Invalid credentials",
+                OtpRequired: false
+            );
+        }
 
-        var verify = _hasher.VerifyHashedPassword(u, u.PasswordHash, request.Password);
-        if (verify == PasswordVerificationResult.Failed)
-            return new(false, null, "Invalid credentials.", false);
+        if (result.OtpRequired)
+        {
+            return new LoginResult(
+                Success: true,
+                AccessToken: null,
+                Error: null,
+                OtpRequired: true
+            );
+        }
 
-        // If trader, enforce OTP (you can change this rule later)
-        var roles = u.UserRoles.Select(r => r.Role.Name).ToList();
-        var otpRequired = roles.Contains("Trader", StringComparer.OrdinalIgnoreCase);
+        // 🔐 CREATE JWT WITH DESIGNATION AS ROLE
+        var token = _jwt.CreateAccessToken(
+      result.loginID,
+      result.LoginName,
+      result.MobileNo
+  );
 
-        if (otpRequired)
-            return new(true, null, null, true);
+      
 
-        var token = _jwt.CreateAccessToken(u.Id, u.Email, u.Phone, roles);
-        return new(true, token, null, false);
+        return new LoginResult(
+            Success: true,
+            AccessToken: token,
+            Error: null,
+            OtpRequired: false
+        );
     }
 
+    // ================= SEND OTP =================
     public async Task<OtpSendResult> SendOtpAsync(OtpSendRequest request, CancellationToken ct)
     {
-        var phone = request.Phone.Trim();
-        if (string.IsNullOrWhiteSpace(phone))
-            return new(false, "Phone is required.");
+        using var db = CreateConnection();
 
         var otp = Random.Shared.Next(100000, 999999).ToString();
-        var secret = _config["Otp:Secret"] ?? _config.GetSection("Jwt")["Key"] ?? "dev-secret";
-        var hash = OtpHasher.Hash(phone, request.Purpose, otp, secret);
+        var secret = _config["Otp:Secret"] ?? _config["Jwt:Key"]!;
+        var hash = OtpHasher.Hash(request.Phone, request.Purpose, otp, secret);
 
-        // lock out after too many OTP sends? keep minimal
-        var entity = new OtpCode
-        {
-            Phone = phone,
-            Purpose = request.Purpose,
-            OtpHash = hash,
-            ExpiresAtUtc = DateTime.UtcNow.AddMinutes(10)
-        };
+        await db.ExecuteAsync(
+            "usp_SendOtp",
+            new
+            {
+                Phone = request.Phone,
+                Purpose = request.Purpose,
+                OtpHash = hash,
+                ExpiryMinutes = 10
+            },
+            commandType: CommandType.StoredProcedure
+        );
 
-        _db.OtpCodes.Add(entity);
-        await _db.SaveChangesAsync(ct);
-
-        // TODO: integrate SMS gateway here
-        // For now, we return a generic message (never return OTP in production).
-        // During development, you can log it on server.
-        return new(true, "OTP sent (if phone exists).");
+        return new OtpSendResult(true, "OTP sent successfully.");
     }
 
+    // ================= VERIFY OTP =================
     public async Task<OtpVerifyResult> VerifyOtpAsync(OtpVerifyRequest request, CancellationToken ct)
     {
-        var phone = request.Phone.Trim();
-        var otp = request.Otp.Trim();
+        using var db = CreateConnection();
 
-        var latest = await _db.OtpCodes
-            .Where(x => x.Phone == phone && x.Purpose == request.Purpose)
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .FirstOrDefaultAsync(ct);
+        var secret = _config["Otp:Secret"] ?? _config["Jwt:Key"]!;
+        var hash = OtpHasher.Hash(request.Phone, request.Purpose, request.Otp, secret);
 
-        if (latest is null) return new(false, null, "OTP not found.");
-        if (latest.IsLocked) return new(false, null, "OTP locked.");
-        if (latest.VerifiedAtUtc is not null) return new(false, null, "OTP already used.");
-        if (DateTime.UtcNow > latest.ExpiresAtUtc) return new(false, null, "OTP expired.");
+        var result = await db.QueryFirstOrDefaultAsync<OtpVerifySpResult>(
+            "usp_VerifyOtp",
+            new
+            {
+                Phone = request.Phone,
+                Purpose = request.Purpose,
+                OtpHash = hash
+            },
+            commandType: CommandType.StoredProcedure
+        );
 
-        // attempt tracking
-        latest.AttemptCount += 1;
-        if (latest.AttemptCount > 5)
+        if (result == null || !result.Success)
         {
-            latest.IsLocked = true;
-            await _db.SaveChangesAsync(ct);
-            return new(false, null, "Too many attempts. OTP locked.");
+            return new OtpVerifyResult(
+                Success: false,
+                AccessToken: null,
+                Error: result?.Message ?? "OTP verification failed"
+            );
         }
 
-        var secret = _config["Otp:Secret"] ?? _config.GetSection("Jwt")["Key"] ?? "dev-secret";
-        var hash = OtpHasher.Hash(phone, request.Purpose, otp, secret);
-        if (!string.Equals(hash, latest.OtpHash, StringComparison.OrdinalIgnoreCase))
-        {
-            await _db.SaveChangesAsync(ct);
-            return new(false, null, "Invalid OTP.");
-        }
+        var token = _jwt.CreateAccessToken(
+      result.loginID,
+      result.LoginName,
+      result.MobileNo
+  );
 
-        latest.VerifiedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
+        return new OtpVerifyResult(
+            Success: true,
+            AccessToken: token,
+            Error: null
+        );
 
-        var u = await _db.Users
-            .Include(x => x.UserRoles).ThenInclude(ur => ur.Role)
-            .FirstOrDefaultAsync(x => x.Phone == phone, ct);
-
-        if (u is null || !u.IsActive)
-            return new(false, null, "User not found or inactive.");
-
-        var roles = u.UserRoles.Select(r => r.Role.Name);
-        var token = _jwt.CreateAccessToken(u.Id, u.Email, u.Phone, roles);
-
-        return new(true, token, null);
     }
 }

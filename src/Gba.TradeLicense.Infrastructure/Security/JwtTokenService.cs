@@ -9,24 +9,38 @@ namespace Gba.TradeLicense.Infrastructure.Security;
 public sealed class JwtTokenService
 {
     private readonly IConfiguration _config;
-    public JwtTokenService(IConfiguration config) => _config = config;
 
-    public string CreateAccessToken(Guid userId, string email, string phone, IEnumerable<string> roles)
+    public JwtTokenService(IConfiguration config)
+    {
+        _config = config;
+    }
+
+    /// <summary>
+    /// Creates JWT access token for Login_Master user
+    /// </summary>
+    public string CreateAccessToken(
+        int loginID,          // Login_Master.loginID
+        string loginName,     // Login_Master.login
+        string mobileNo       // Login_Master.MobileNo
+    )
     {
         var jwt = _config.GetSection("Jwt");
+
         var issuer = jwt["Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer missing");
         var audience = jwt["Audience"] ?? throw new InvalidOperationException("Jwt:Audience missing");
         var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key missing");
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(JwtRegisteredClaimNames.Email, email ?? string.Empty),
-            new("phone", phone ?? string.Empty),
-        };
+            // Standard
+            new(JwtRegisteredClaimNames.Sub, loginID.ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, loginName ?? string.Empty),
 
-        foreach (var r in roles.Distinct(StringComparer.OrdinalIgnoreCase))
-            claims.Add(new Claim(ClaimTypes.Role, r));
+            // Custom
+            new("loginID", loginID.ToString()),
+            new("login", loginName ?? string.Empty),
+            new("mobile", mobileNo ?? string.Empty)
+        };
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
         var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
