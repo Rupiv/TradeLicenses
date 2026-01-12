@@ -8,6 +8,7 @@ public sealed record ApplicationCreateRequest(
     decimal? ConnectedLoadKw
 );
 
+
 public sealed record ApplicationCreateResult(bool Success, string? ApplicationNo, string? Error);
 
 public sealed record ApplicationStatusResult(bool Success, string? ApplicationNo, string? Status, object? History, string? Error);

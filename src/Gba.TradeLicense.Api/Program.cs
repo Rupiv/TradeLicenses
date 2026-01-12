@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Persistence;
 using Gba.TradeLicense.Infrastructure.Security;
@@ -6,63 +6,85 @@ using Gba.TradeLicense.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --------------------------------------------------
+// SERVICES
+// --------------------------------------------------
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Db
-builder.Services.AddDbContext<AppDbContext>(opt =>
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
-builder.Services.AddScoped<IDashboardService, DashboardService>();
 
-// Services
+// Application Services
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ITradeApplicationService, TradeApplicationService>();
 
-// JWT Auth
-var jwt = builder.Configuration.GetSection("Jwt");
-var issuer = jwt["Issuer"];
-var audience = jwt["Audience"];
-var key = jwt["Key"] ?? throw new InvalidOperationException("Jwt:Key missing");
+// --------------------------------------------------
+// JWT AUTHENTICATION
+// --------------------------------------------------
+
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var issuer = jwtSection["Issuer"];
+var audience = jwtSection["Audience"];
+var key = jwtSection["Key"]
+          ?? throw new InvalidOperationException("Jwt:Key is missing");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
+    .AddJwtBearer(options =>
     {
-        opt.TokenValidationParameters = new TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = issuer,
+
             ValidateAudience = true,
             ValidAudience = audience,
+
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(key)
+            ),
+
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30)
         };
     });
 
+// Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("TraderOnly", p => p.RequireRole("Trader"));
     options.AddPolicy("ApproverOnly", p => p.RequireRole("Approver"));
     options.AddPolicy("SeniorApproverOnly", p => p.RequireRole("SeniorApprover"));
     options.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
-    options.AddPolicy("ApproverOrSenior", p => p.RequireRole("Approver", "SeniorApprover"));
+    options.AddPolicy("ApproverOrSenior", p =>
+        p.RequireRole("Approver", "SeniorApprover"));
 });
 
-// Swagger with Bearer
+// --------------------------------------------------
+// SWAGGER (PRODUCTION ENABLED)
+// --------------------------------------------------
+
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "GBA Trade License API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "GBA Trade License API",
+        Version = "v1"
+    });
 
+    // JWT Bearer support in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -70,7 +92,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter: Bearer {token}"
+        Description = "Enter token as: Bearer {your JWT token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -78,15 +100,24 @@ builder.Services.AddSwaggerGen(c =>
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
             },
             Array.Empty<string>()
         }
     });
 });
 
+// --------------------------------------------------
+// APP PIPELINE
+// --------------------------------------------------
+
 var app = builder.Build();
 
+// Swagger MUST be before routing
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -94,24 +125,25 @@ app.UseSwaggerUI(c =>
     c.DisplayRequestDuration();
 });
 
+// HTTPS (safe even behind IIS)
 app.UseHttpsRedirection();
 
-// audit middleware (minimal)
-app.Use(async (ctx, next) =>
+// 🔑 REQUIRED for endpoint mapping
+app.UseRouting();
+
+// Optional audit middleware
+app.Use(async (context, next) =>
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
     await next();
     sw.Stop();
-
-    // For full audit logging, persist request/response bodies carefully (size limits & PII).
-    // This skeleton keeps it lightweight.
 });
 
+// Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Controllers
 app.MapControllers();
-
-
 
 app.Run();
