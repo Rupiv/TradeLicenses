@@ -13,15 +13,19 @@ public sealed record LoginRequest(
 public sealed class LoginSpResult
 {
     public bool Success { get; set; }
-    public int loginID { get; set; }
-    public string LoginName { get; set; } = "";
-    public string MobileNo { get; set; } = "";
 
-    public int UserDesignationID { get; set; }
-    public string DesignationName { get; set; } = "";   // 🔑 IMPORTANT
+    public int loginID { get; set; }
+
+    public string LoginName { get; set; } = string.Empty;
+
+    public string MobileNo { get; set; } = string.Empty;
+
+    public int UserDesignationID { get; set; }     // ✅ MATCH SP
+    public string UserDesignationName { get; set; } = string.Empty; // ✅ MATCH SP
 
     public bool OtpRequired { get; set; }
-    public string Message { get; set; } = "";
+
+    public string? Message { get; set; }
 }
 
 

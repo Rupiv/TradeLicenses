@@ -15,13 +15,11 @@ public sealed class JwtTokenService
         _config = config;
     }
 
-    /// <summary>
-    /// Creates JWT access token for Login_Master user
-    /// </summary>
     public string CreateAccessToken(
-        int loginID,          // Login_Master.loginID
-        string loginName,     // Login_Master.login
-        string mobileNo       // Login_Master.MobileNo
+        int loginID,
+        string loginName,
+        string mobileNo,
+        string designation   // ? added
     )
     {
         var jwt = _config.GetSection("Jwt");
@@ -32,14 +30,15 @@ public sealed class JwtTokenService
 
         var claims = new List<Claim>
         {
-            // Standard
             new(JwtRegisteredClaimNames.Sub, loginID.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, loginName ?? string.Empty),
 
-            // Custom
             new("loginID", loginID.ToString()),
             new("login", loginName ?? string.Empty),
-            new("mobile", mobileNo ?? string.Empty)
+            new("mobile", mobileNo ?? string.Empty),
+
+            // ?? designation in JWT
+            new("designation", designation ?? string.Empty)
         };
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));

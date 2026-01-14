@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
         // ✅ Capture IP & Browser SERVER-SIDE (trusted)
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "UNKNOWN";
         var browser = Request.Headers["User-Agent"].ToString();
+        var designation = User.FindFirst("designation")?.Value;
 
         // Call service with credentials + server metadata
         var result = await _authService.LoginAsync(

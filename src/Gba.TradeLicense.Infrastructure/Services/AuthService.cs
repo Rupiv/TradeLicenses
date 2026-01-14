@@ -72,7 +72,8 @@ public sealed class AuthService : IAuthService
         var token = _jwt.CreateAccessToken(
       result.loginID,
       result.LoginName,
-      result.MobileNo
+      result.MobileNo,
+      result.UserDesignationName
   );
 
       
@@ -140,7 +141,8 @@ public sealed class AuthService : IAuthService
         var token = _jwt.CreateAccessToken(
       result.loginID,
       result.LoginName,
-      result.MobileNo
+      result.MobileNo,
+      ""
   );
 
         return new OtpVerifyResult(
