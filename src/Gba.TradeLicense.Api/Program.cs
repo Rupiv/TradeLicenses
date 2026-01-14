@@ -3,6 +3,8 @@ using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Persistence;
 using Gba.TradeLicense.Infrastructure.Security;
 using Gba.TradeLicense.Infrastructure.Services;
+using Gba.TradeLicense.Infrastructure.Sms;
+using Gba.TradeLicense.Infrastructure.Sms.esms_client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -47,10 +49,15 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 // Application Services
+
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ITradeApplicationService, TradeApplicationService>();
+builder.Services.AddSingleton<KarnatakaSmsService>();
+builder.Services.AddScoped<ISmsService, SmsService>();
+builder.Services.AddScoped<SMSHttpPostClient>();
+
 
 // --------------------------------------------------
 // JWT AUTHENTICATION
