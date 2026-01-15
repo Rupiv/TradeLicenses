@@ -12,6 +12,19 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 🔹 ADD CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularPolicy", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200") // Angular URL
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // Only if using cookies/auth
+    });
+});
+
 // --------------------------------------------------
 // SERVICES
 // --------------------------------------------------
@@ -156,7 +169,11 @@ app.Use(async (context, next) =>
     sw.Stop();
 });
 
+// 🔹 USE CORS (order matters!)
+app.UseHttpsRedirection();
+
 // Auth
+app.UseCors("AngularPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
