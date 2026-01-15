@@ -35,6 +35,25 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
             return Ok(data);
         }
+        [HttpGet("by-constituency/{constituencyId:int}")]
+        public async Task<IActionResult> GetWardsByConstituency(
+    int constituencyId,
+    CancellationToken ct)
+        {
+            using var db = CreateConnection();
+
+            var wards = await db.QueryAsync<BBMPWardModel>(
+                "sp_Master_BBMPWard_CRUD",
+                new
+                {
+                    Action = "GETBYCONSTITUENCY",
+                    constituencyID = constituencyId
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(wards);
+        }
 
         // ================= GET BY ID =================
         [HttpGet("{id:int}")]
