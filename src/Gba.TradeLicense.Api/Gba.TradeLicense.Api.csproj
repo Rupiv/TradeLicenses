@@ -20,6 +20,7 @@
 		<ProjectReference Include="..\Gba.TradeLicense.Domain\Gba.TradeLicense.Domain.csproj" />
 		<ProjectReference Include="..\Gba.TradeLicense.Application\Gba.TradeLicense.Application.csproj" />
 		<ProjectReference Include="..\Gba.TradeLicense.Infrastructure\Gba.TradeLicense.Infrastructure.csproj" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
 
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
 
