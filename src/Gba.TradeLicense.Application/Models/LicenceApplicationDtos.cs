@@ -26,6 +26,11 @@ public sealed record LicenceApplicationUpsertDto
     string? ChallanNo,
     int NoOfYearsApplied
 );
+public class MasterDocumentDto
+{
+    public int DocumentID { get; set; }
+    public string DocumentName { get; set; } = string.Empty;
+}
 
 // -------- SEARCH --------
 public sealed record LicenceApplicationSearchDto

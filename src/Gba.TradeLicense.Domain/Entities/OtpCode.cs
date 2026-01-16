@@ -9,4 +9,5 @@ public sealed class OtpCode : BaseEntity
     public DateTime? VerifiedAtUtc { get; set; }
     public int AttemptCount { get; set; } = 0;
     public bool IsLocked { get; set; } = false;
+
 }

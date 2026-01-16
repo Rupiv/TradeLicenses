@@ -31,7 +31,6 @@ public class LicenceApplicationController : ControllerBase
             new
             {
                 Action = "INSERT",
-                dto.NewApplicationNumber,
                 dto.FinanicalYearID,
                 dto.TradeTypeID,
                 dto.BescomRRNumber,
@@ -39,10 +38,7 @@ public class LicenceApplicationController : ControllerBase
                 dto.VATNumber,
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
-                dto.LicenceApplicationStatusID,
-                dto.CurrentStatus,
-                dto.TradeLicenceID,
-                dto.MohID,
+                dto.TradeLicenceID,          // from Licence_Master
                 dto.LoginID,
                 dto.EntryOriginLoginID,
                 dto.InspectingOfficerID,
@@ -80,8 +76,6 @@ public class LicenceApplicationController : ControllerBase
                 dto.VATNumber,
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
-                dto.LicenceApplicationStatusID,
-                dto.CurrentStatus,
                 dto.InspectingOfficerID,
                 dto.LicenseType,
                 dto.ApplicantRepersenting,
@@ -164,7 +158,8 @@ public class LicenceApplicationController : ControllerBase
     {
         using var db = CreateConnection();
 
-        await db.ExecuteAsync(
+        // SP now RETURNS ApplicationNumber
+        var result = await db.QuerySingleAsync<dynamic>(
             "usp_LicenceApplication_CRUD",
             new
             {
@@ -174,6 +169,10 @@ public class LicenceApplicationController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        return Ok(new { Submitted = true });
+        return Ok(new
+        {
+            Submitted = true,
+            ApplicationNumber = result.ApplicationNumber
+        });
     }
 }

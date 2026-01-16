@@ -5,8 +5,8 @@ using Microsoft.Data.SqlClient;
 
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/trade-zonal-classification")]
     public class TradeZonalClassificationController : ControllerBase
     {
         private readonly IConfiguration _config;
@@ -46,7 +46,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         /* ================= GET BY ID ================= */
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public IActionResult GetById(int id)
         {
             TradeZonalClassification? item = null;
@@ -67,14 +67,14 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             }
 
             if (item == null)
-                return NotFound();
+                return NotFound(new { Message = "Record not found" });
 
             return Ok(item);
         }
 
         /* ================= INSERT ================= */
         [HttpPost]
-        public IActionResult Insert(TradeZonalClassification model)
+        public IActionResult Insert([FromBody] TradeZonalClassification model)
         {
             using SqlConnection con = GetConnection();
             using SqlCommand cmd = new SqlCommand(
@@ -89,12 +89,16 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             con.Open();
             int id = Convert.ToInt32(cmd.ExecuteScalar());
 
-            return Ok(new { zonalClassificationID = id });
+            return Ok(new
+            {
+                Message = "Inserted successfully",
+                zonalClassificationID = id
+            });
         }
 
         /* ================= UPDATE ================= */
         [HttpPut]
-        public IActionResult Update(TradeZonalClassification model)
+        public IActionResult Update([FromBody] TradeZonalClassification model)
         {
             using SqlConnection con = GetConnection();
             using SqlCommand cmd = new SqlCommand(
@@ -111,11 +115,11 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             con.Open();
             cmd.ExecuteNonQuery();
 
-            return Ok(new { Updated = true });
+            return Ok(new { Message = "Updated successfully" });
         }
 
         /* ================= DELETE (SOFT) ================= */
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public IActionResult Delete(int id)
         {
             using SqlConnection con = GetConnection();
@@ -129,7 +133,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             con.Open();
             cmd.ExecuteNonQuery();
 
-            return Ok(new { Deleted = true });
+            return Ok(new { Message = "Deleted successfully" });
         }
 
         /* ================= COMMON MAPPER ================= */
@@ -138,13 +142,13 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             return new TradeZonalClassification
             {
                 ZonalClassificationID = Convert.ToInt32(dr["zonalClassificationID"]),
-                ZonalCode = dr["zonalCode"].ToString(),
-                ZonalClassificationName = dr["zonalClassificationName"].ToString(),
-                ZonalClassificationNativeName = dr["zonalClassificationNativeName"].ToString(),
+                ZonalCode = dr["zonalCode"]?.ToString(),
+                ZonalClassificationName = dr["zonalClassificationName"]?.ToString(),
+                ZonalClassificationNativeName = dr["zonalClassificationNativeName"]?.ToString(),
                 IsActive =
-                    dr["isActive"].ToString() == "Y" ||
-                    dr["isActive"].ToString() == "1" ||
-                    dr["isActive"].ToString().ToLower() == "true"
+                    dr["isActive"]?.ToString() == "Y" ||
+                    dr["isActive"]?.ToString() == "1" ||
+                    dr["isActive"]?.ToString()?.ToLower() == "true"
             };
         }
     }

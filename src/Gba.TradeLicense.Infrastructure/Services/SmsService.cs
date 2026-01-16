@@ -19,16 +19,16 @@ public class SmsService : ISmsService
     }
 
     public async Task<string> SendAsync(
-        string templateKey,
-        string mobileNo,
-        params string[] variables)
+      string templateKey,
+      string mobileNo,
+      params string[] variables)
     {
         using var db = new SqlConnection(_connStr);
 
         var template = await db.QueryFirstOrDefaultAsync<dynamic>(
             @"SELECT TemplateId, TemplateText, SmsType
-              FROM SMS_Template_Master
-              WHERE TemplateKey = @templateKey AND IsActive = 'Y'",
+          FROM SMS_Template_Master
+          WHERE TemplateKey = @templateKey AND IsActive = 'Y'",
             new { templateKey });
 
         if (template == null)
@@ -36,8 +36,11 @@ public class SmsService : ISmsService
 
         string message = template.TemplateText;
 
-        foreach (var v in variables)
-            message = message.Replace("{#var#}", v, StringComparison.OrdinalIgnoreCase);
+        // ✅ FIX: Replace {0}, {1}, {2} placeholders
+        for (int i = 0; i < variables.Length; i++)
+        {
+            message = message.Replace("{" + i + "}", variables[i]);
+        }
 
         var smsCfg = _config.GetSection("Sms");
 
@@ -80,4 +83,5 @@ public class SmsService : ISmsService
                         template.TemplateId)
         };
     }
+
 }
