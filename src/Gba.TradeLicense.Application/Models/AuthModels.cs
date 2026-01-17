@@ -8,6 +8,17 @@ public sealed record LoginRequest(
     string UsernameOrPhone,
     string Password
 );
+public sealed record RegisterUserDto
+(
+    string FullName,
+    string MobileNumber,
+    string? EmailID
+);
+
+public sealed record LoginDto
+(
+    string MobileNumber
+);
 
 // Result returned by Login Stored Procedure (usp_LoginUser)
 public sealed class LoginSpResult

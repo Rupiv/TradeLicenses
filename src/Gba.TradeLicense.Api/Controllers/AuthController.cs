@@ -1,6 +1,8 @@
-﻿using Gba.TradeLicense.Application.Models;
+﻿using System.Data;
 using Gba.TradeLicense.Application.Abstractions;
+using Gba.TradeLicense.Application.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -12,9 +14,72 @@ public class AuthController : ControllerBase
     {
         _authService = authService;
     }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(
+         [FromBody] RegisterUserDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.FullName)
+            || string.IsNullOrWhiteSpace(dto.MobileNumber))
+            return BadRequest("Invalid request");
 
-    // ----------------- Login -----------------
-    [HttpPost("login")]
+        using var db = Db();
+
+        try
+        {
+            var userId = await db.ExecuteScalarAsync<int>(
+                "usp_UserAuth_CRUD",
+                new
+                {
+                    Action = "REGISTER",
+                    dto.FullName,
+                    dto.MobileNumber,
+                    dto.EmailID
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(new
+            {
+                UserID = userId,
+                Message = "User registered successfully"
+            });
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /* ======================================================
+       LOGIN (AFTER OTP VERIFIED)
+    ====================================================== */
+    [HttpPost("login-USER")]
+    public async Task<IActionResult> Login_USER(
+        [FromBody] LoginDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.MobileNumber))
+            return BadRequest("Mobile number is required");
+
+        using var db = Db();
+
+        var user = await db.QueryFirstOrDefaultAsync(
+            "usp_UserAuth_CRUD",
+            new
+            {
+                Action = "LOGIN",
+                dto.MobileNumber
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        if (user == null)
+            return Unauthorized("User not found");
+
+        return Ok(user);
+    }
+
+// ----------------- Login -----------------
+[HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         if (request == null ||
