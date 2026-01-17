@@ -21,8 +21,8 @@ public class LicenceApplicationController : ControllerBase
     // ================= INSERT DRAFT =================
     [HttpPost("draft")]
     public async Task<IActionResult> InsertDraft(
-        [FromBody] LicenceApplicationUpsertDto dto,
-        CancellationToken ct)
+       [FromBody] LicenceApplicationUpsertDto dto,
+       CancellationToken ct)
     {
         using var db = CreateConnection();
 
@@ -31,22 +31,29 @@ public class LicenceApplicationController : ControllerBase
             new
             {
                 Action = "INSERT",
+
                 dto.FinanicalYearID,
                 dto.TradeTypeID,
-                dto.BescomRRNumber,
-                dto.TINNumber,
-                dto.VATNumber,
+
+                BescomRRNumber = dto.BescomRRNumber ?? "",
+                TINNumber = dto.TINNumber ?? "",   // NOT NULL column
+                VATNumber = dto.VATNumber ?? "",
+
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
-                dto.TradeLicenceID,          // from Licence_Master
+
+                dto.TradeLicenceID,
+                dto.MohID,                     // ✅ REQUIRED (MISSING EARLIER)
+
                 dto.LoginID,
                 dto.EntryOriginLoginID,
                 dto.InspectingOfficerID,
-                dto.LicenseType,
+
+                LicenseType = dto.LicenseType ?? "",
                 dto.ApplicantRepersenting,
-                dto.JathaStatus,
+                JathaStatus = dto.JathaStatus ?? "",
                 dto.DocsSubmitted,
-                dto.ChallanNo,
+                ChallanNo = dto.ChallanNo ?? "",
                 dto.NoOfYearsApplied
             },
             commandType: CommandType.StoredProcedure
@@ -55,12 +62,13 @@ public class LicenceApplicationController : ControllerBase
         return Ok(new { LicenceApplicationID = id });
     }
 
+
     // ================= UPDATE DRAFT =================
     [HttpPut("draft/{id:long}")]
     public async Task<IActionResult> UpdateDraft(
-        long id,
-        [FromBody] LicenceApplicationUpsertDto dto,
-        CancellationToken ct)
+      long id,
+      [FromBody] LicenceApplicationUpsertDto dto,
+      CancellationToken ct)
     {
         using var db = CreateConnection();
 
@@ -70,18 +78,22 @@ public class LicenceApplicationController : ControllerBase
             {
                 Action = "UPDATE",
                 LicenceApplicationID = id,
+
                 dto.TradeTypeID,
-                dto.BescomRRNumber,
-                dto.TINNumber,
-                dto.VATNumber,
+
+                BescomRRNumber = dto.BescomRRNumber ?? "",
+                TINNumber = dto.TINNumber ?? "",
+                VATNumber = dto.VATNumber ?? "",
+
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
+
                 dto.InspectingOfficerID,
-                dto.LicenseType,
+                LicenseType = dto.LicenseType ?? "",
                 dto.ApplicantRepersenting,
-                dto.JathaStatus,
+                JathaStatus = dto.JathaStatus ?? "",
                 dto.DocsSubmitted,
-                dto.ChallanNo,
+                ChallanNo = dto.ChallanNo ?? "",
                 dto.NoOfYearsApplied
             },
             commandType: CommandType.StoredProcedure
@@ -89,6 +101,8 @@ public class LicenceApplicationController : ControllerBase
 
         return Ok(new { Updated = true });
     }
+
+
 
     // ================= GET BY ID =================
     [HttpGet("{id:long}")]
