@@ -3,17 +3,24 @@ using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Application.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Dapper;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IConfiguration _config;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IConfiguration config)
     {
         _authService = authService;
+        _config = config;
+        
     }
+    private IDbConnection Db()
+             => new SqlConnection(_config.GetConnectionString("Default"));
+
     [HttpPost("register")]
     public async Task<IActionResult> Register(
          [FromBody] RegisterUserDto dto)
