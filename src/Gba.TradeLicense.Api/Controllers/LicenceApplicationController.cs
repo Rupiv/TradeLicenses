@@ -61,7 +61,36 @@ public class LicenceApplicationController : ControllerBase
 
         return Ok(new { LicenceApplicationID = id });
     }
+    [HttpGet("by-login/{loginId:int}")]
+    public async Task<IActionResult> GetByLogin(
+       int loginId,
+       [FromQuery] int pageNumber = 1,
+       [FromQuery] int pageSize = 10)
+    {
+        using var db = CreateConnection();
 
+        using var multi = await db.QueryMultipleAsync(
+            "usp_LicenceApplication_GetByLogin_Paged",
+            new
+            {
+                LoginID = loginId,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        var totalRecords = await multi.ReadFirstAsync<int>();
+        var data = (await multi.ReadAsync()).ToList();
+
+        return Ok(new
+        {
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Data = data
+        });
+    }
     [HttpGet("paged")]
     public async Task<IActionResult> GetAllApplicationsPaged(
     [FromQuery] int pageNumber = 1,
