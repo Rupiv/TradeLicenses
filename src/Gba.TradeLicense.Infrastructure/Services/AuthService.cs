@@ -25,6 +25,47 @@ public sealed class AuthService : IAuthService
 
     private IDbConnection CreateConnection()
         => new SqlConnection(_connStr);
+    public async Task<LoginResult> LoginUserByMobileAsync(
+    string mobileNumber,
+    CancellationToken ct)
+    {
+        using var db = CreateConnection();
+
+        var user = await db.QueryFirstOrDefaultAsync<LoginSpResult>(
+            "usp_UserAuth_CRUD",
+            new
+            {
+                Action = "LOGIN",
+                MobileNumber = mobileNumber
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        if (user == null)
+        {
+            return new LoginResult(
+                Success: false,
+                AccessToken: null,
+                Error: "User not found or inactive",
+                OtpRequired: false
+            );
+        }
+
+        // 🔐 FORCE DESIGNATION AS TRADE_OWNER
+        var token = _jwt.CreateAccessToken(
+            user.loginID,
+            user.LoginName,
+            user.MobileNo,
+            "TRADE_OWNER"
+        );
+
+        return new LoginResult(
+            Success: true,
+            AccessToken: token,
+            Error: null,
+            OtpRequired: false
+        );
+    }
 
     // ================= LOGIN =================
     public async Task<LoginResult> LoginAsync(

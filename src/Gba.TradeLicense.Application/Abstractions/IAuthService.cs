@@ -16,6 +16,10 @@ public interface IAuthService
         OtpSendRequest request,
         CancellationToken ct
     );
+    Task<LoginResult> LoginUserByMobileAsync(
+      string mobileNumber,
+      CancellationToken ct
+  );
 
     // Verify OTP
     Task<OtpVerifyResult> VerifyOtpAsync(

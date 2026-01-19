@@ -79,7 +79,9 @@ public class AuthController : ControllerBase
        LOGIN (AFTER OTP VERIFIED)
     ====================================================== */
     [HttpPost("login-user")]
-    public async Task<IActionResult> Login_USER([FromBody] LoginDto dto)
+    public async Task<IActionResult> Login_USER(
+        [FromBody] LoginDto dto,
+        CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.MobileNumber))
         {
@@ -89,32 +91,21 @@ public class AuthController : ControllerBase
             });
         }
 
-        using var db = Db();
-
-        var user = await db.QueryFirstOrDefaultAsync(
-            "usp_UserAuth_CRUD",
-            new
-            {
-                Action = "LOGIN",
-                dto.MobileNumber
-            },
-            commandType: CommandType.StoredProcedure
+        var result = await _authService.LoginUserByMobileAsync(
+            dto.MobileNumber,
+            ct
         );
 
-        if (user == null)
-        {
-            return Unauthorized(new
-            {
-                Message = "User not found or inactive"
-            });
-        }
+        if (!result.Success)
+            return Unauthorized(new { result.Error });
 
         return Ok(new
         {
-            Message = "Login successful",
-            Data = user
+            result.Success,
+            result.AccessToken
         });
     }
+
 
 
     // ----------------- Login -----------------
