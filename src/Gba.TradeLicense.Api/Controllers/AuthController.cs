@@ -20,14 +20,17 @@ public class AuthController : ControllerBase
     }
     private IDbConnection Db()
              => new SqlConnection(_config.GetConnectionString("Default"));
-
     [HttpPost("register")]
-    public async Task<IActionResult> Register(
-         [FromBody] RegisterUserDto dto)
+    public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.FullName)
-            || string.IsNullOrWhiteSpace(dto.MobileNumber))
-            return BadRequest("Invalid request");
+        if (string.IsNullOrWhiteSpace(dto.FullName) ||
+            string.IsNullOrWhiteSpace(dto.MobileNumber))
+        {
+            return BadRequest(new
+            {
+                Message = "Full name and mobile number are required"
+            });
+        }
 
         using var db = Db();
 
@@ -53,19 +56,38 @@ public class AuthController : ControllerBase
         }
         catch (SqlException ex)
         {
-            return BadRequest(ex.Message);
+            // Business validation errors from SP
+            if (ex.Message.Contains("Mobile number already registered"))
+            {
+                return Conflict(new { Message = "Mobile number already registered" });
+            }
+
+            if (ex.Message.Contains("Email ID already registered"))
+            {
+                return Conflict(new { Message = "Email ID already registered" });
+            }
+
+            // Unknown SQL error
+            return StatusCode(500, new
+            {
+                Message = "An error occurred while registering user"
+            });
         }
     }
 
     /* ======================================================
        LOGIN (AFTER OTP VERIFIED)
     ====================================================== */
-    [HttpPost("login-USER")]
-    public async Task<IActionResult> Login_USER(
-        [FromBody] LoginDto dto)
+    [HttpPost("login-user")]
+    public async Task<IActionResult> Login_USER([FromBody] LoginDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.MobileNumber))
-            return BadRequest("Mobile number is required");
+        {
+            return BadRequest(new
+            {
+                Message = "Mobile number is required"
+            });
+        }
 
         using var db = Db();
 
@@ -80,13 +102,23 @@ public class AuthController : ControllerBase
         );
 
         if (user == null)
-            return Unauthorized("User not found");
+        {
+            return Unauthorized(new
+            {
+                Message = "User not found or inactive"
+            });
+        }
 
-        return Ok(user);
+        return Ok(new
+        {
+            Message = "Login successful",
+            Data = user
+        });
     }
 
-// ----------------- Login -----------------
-[HttpPost("login")]
+
+    // ----------------- Login -----------------
+    [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         if (request == null ||
