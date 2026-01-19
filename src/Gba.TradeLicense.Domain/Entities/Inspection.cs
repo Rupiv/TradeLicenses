@@ -11,3 +11,5 @@ public sealed class Inspection : BaseEntity
     public string Result { get; set; } = "Pending"; // Pending, Pass, Fail
     public DateTime? CompletedAtUtc { get; set; }
 }
+
+

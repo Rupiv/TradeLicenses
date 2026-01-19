@@ -62,6 +62,35 @@ public class LicenceApplicationController : ControllerBase
         return Ok(new { LicenceApplicationID = id });
     }
 
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetAllApplicationsPaged(
+    [FromQuery] int pageNumber = 1,
+    [FromQuery] int pageSize = 10)
+    {
+        using var db = CreateConnection();
+
+        using var multi = await db.QueryMultipleAsync(
+            "usp_LicenceApplication_GetAll_Paged",
+            new
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        var totalRecords = await multi.ReadFirstAsync<int>();
+        var applications = await multi.ReadAsync();
+
+        return Ok(new
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalRecords = totalRecords,
+            TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize),
+            Data = applications
+        });
+    }
 
     // ================= UPDATE DRAFT =================
     [HttpPut("draft/{id:long}")]
