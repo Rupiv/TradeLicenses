@@ -68,9 +68,8 @@ public class OfficeDetailsController : ControllerBase
 
         return Ok(new { Updated = true });
     }
-
     /* ================= GET BY ID ================= */
-    [HttpGet("{id:int}")]
+    [HttpGet("api/get-by-id")]
     public async Task<IActionResult> GetById(int id)
     {
         using var db = Db();
@@ -87,7 +86,33 @@ public class OfficeDetailsController : ControllerBase
 
         return Ok(data);
     }
+    /* ================= GET BY ID ================= */
+    [HttpGet("api/getall")]
+    public async Task<IActionResult> GetAll()
+    {
+        using var db = Db();
 
+        var list = await db.QueryAsync<OfficeDetailsDto>(
+            "usp_MasterOfficeDetails_CRUD",
+            new { Action = "GETALL" },
+            commandType: CommandType.StoredProcedure
+        );
+
+        return Ok(list);
+    }
+    [HttpGet("api/get-all-user-designation")]
+    public async Task<IActionResult> GetAllUserDesig()
+    {
+        using var db = Db();
+
+        var list = await db.QueryAsync<userd>(
+            "usp_MasterOfficeDetails_CRUD",
+            new { Action = "GETALLUSERD" },
+            commandType: CommandType.StoredProcedure
+        );
+
+        return Ok(list);
+    }
     /* ================= SEARCH ================= */
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] string? q)

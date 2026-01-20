@@ -26,5 +26,13 @@ namespace Gba.TradeLicense.Domain.Entities
         public string? EmailID { get; set; }
         public string? ContactNO { get; set; }
     }
+    public sealed record userd
+    { 
+        public int userDesignationId { get; set; }
+        public string? userDesignationName { get; set; }
+        public string? isActive { get; set;  }
+
+
+    }
 
 }

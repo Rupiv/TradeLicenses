@@ -41,6 +41,33 @@ public class LoginMasterController : ControllerBase
 
         return Ok(new { loginID = id });
     }
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        using var db = Db();
+
+        using var multi = await db.QueryMultipleAsync(
+            "usp_LoginMaster_CRUD",
+            new
+            {
+                Action = "GETALLUSERD"
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        // 1️⃣ Office Details
+        var offices = (await multi.ReadAsync()).ToList();
+
+        // 2️⃣ Designations
+        var designations = (await multi.ReadAsync()).ToList();
+
+        return Ok(new
+        {
+            offices,
+            designations
+        });
+    }
+
 
     /* ================= UPDATE ================= */
     [HttpPut("{id:int}")]
@@ -89,22 +116,45 @@ public class LoginMasterController : ControllerBase
 
     /* ================= SEARCH ================= */
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string? q)
+    public async Task<IActionResult> Search(
+      [FromQuery] string? q,
+      [FromQuery] int pageNumber = 1,
+      [FromQuery] int pageSize = 10
+  )
     {
         using var db = Db();
 
-        var data = await db.QueryAsync(
-            "usp_LoginMaster_CRUD",
-            new
-            {
-                Action = "SEARCH",
-                searchText = q
-            },
-            commandType: CommandType.StoredProcedure
-        );
+        var parameters = new DynamicParameters();
+        parameters.Add("@Action", "SEARCH");
+        parameters.Add("@searchText", q);
+        parameters.Add("@PageNumber", pageNumber);
+        parameters.Add("@PageSize", pageSize);
 
-        return Ok(data);
+        int totalRecords = 0;
+        var users = new List<LoginMasterDto>();
+
+        using (var multi = await db.QueryMultipleAsync(
+            "usp_LoginMaster_CRUD",
+            parameters,
+            commandType: CommandType.StoredProcedure
+        ))
+        {
+            /* ========= FIRST RESULT SET → TOTAL COUNT ========= */
+            totalRecords = await multi.ReadFirstAsync<int>();
+
+            /* ========= SECOND RESULT SET → DATA ========= */
+            users = (await multi.ReadAsync<LoginMasterDto>()).ToList();
+        }
+
+        return Ok(new
+        {
+            totalRecords,
+            pageNumber,
+            pageSize,
+            data = users
+        });
     }
+
 
     /* ================= DELETE ================= */
     [HttpDelete("{id:int}")]
