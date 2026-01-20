@@ -34,6 +34,17 @@ namespace Gba.TradeLicense.Domain.Entities
         public bool IsConfirmed { get; set; }
         public DateTime? EntryDate { get; set; }
     }
+    public class LicenceGeoConfirmDto
+    {
+        public long LicenceApplicationID { get; set; }
+        public decimal Latitude { get; set; }
+        public decimal Longitude { get; set; }
+        public string RoadID { get; set; }
+        public int RoadWidthMtrs { get; set; }
+        public string RoadCategoryCode { get; set; }
+        public string RoadCategory { get; set; }
+        public int LoginID { get; set; }
+    }
 
     public class KgisRoadResponse
     {

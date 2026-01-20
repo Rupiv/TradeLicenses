@@ -120,7 +120,25 @@ public class LicenceApplicationController : ControllerBase
             Data = applications
         });
     }
+    [HttpGet("current-status/{licenceApplicationID:long}")]
+    public async Task<IActionResult> GetCurrentStatus(long licenceApplicationID)
+    {
+        using var db = CreateConnection();
 
+        var status = await db.QueryFirstOrDefaultAsync(
+            "usp_LicenceApplication_TrackStatus",
+            new { LicenceApplicationID = licenceApplicationID },
+            commandType: CommandType.StoredProcedure
+        );
+
+        if (status == null)
+            return NotFound(new
+            {
+                message = "Application not found"
+            });
+
+        return Ok(status);
+    }
     // ================= UPDATE DRAFT =================
     [HttpPut("draft/{id:long}")]
     public async Task<IActionResult> UpdateDraft(

@@ -103,32 +103,41 @@ namespace Gba.TradeLicense.Api.Controllers
         // STEP 2: Save after confirmation
         [HttpPost("confirm-save")]
         public IActionResult ConfirmAndSave(
-            [FromBody] dynamic model
-        )
+     [FromBody] LicenceGeoConfirmDto model
+ )
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             using SqlConnection con = new SqlConnection(
-                _config.GetConnectionString("DefaultConnection")
+                _config.GetConnectionString("Default")
             );
 
             using SqlCommand cmd = new SqlCommand(
-                "usp_LicenceApplication_Geo_Save", con);
+                "usp_LicenceApplication_Geo_Save", con
+            );
 
             cmd.CommandType = CommandType.StoredProcedure;
 
-            cmd.Parameters.AddWithValue("@LicenceApplicationID", (int)model.licenceApplicationID);
-            cmd.Parameters.AddWithValue("@Latitude", (decimal)model.latitude);
-            cmd.Parameters.AddWithValue("@Longitude", (decimal)model.longitude);
-            cmd.Parameters.AddWithValue("@RoadID", (string)model.roadID);
-            cmd.Parameters.AddWithValue("@RoadWidthMtrs", (int)model.roadWidthMtrs);
-            cmd.Parameters.AddWithValue("@RoadCategoryCode", (string)model.roadCategoryCode);
-            cmd.Parameters.AddWithValue("@RoadCategory", (string)model.roadCategory);
-            cmd.Parameters.AddWithValue("@LoginID", (int)model.loginID);
+            cmd.Parameters.AddWithValue("@LicenceApplicationID", model.LicenceApplicationID);
+            cmd.Parameters.AddWithValue("@Latitude", model.Latitude);
+            cmd.Parameters.AddWithValue("@Longitude", model.Longitude);
+            cmd.Parameters.AddWithValue("@RoadID", model.RoadID);
+            cmd.Parameters.AddWithValue("@RoadWidthMtrs", model.RoadWidthMtrs);
+            cmd.Parameters.AddWithValue("@RoadCategoryCode", model.RoadCategoryCode);
+            cmd.Parameters.AddWithValue("@RoadCategory", model.RoadCategory);
+            cmd.Parameters.AddWithValue("@LoginID", model.LoginID);
 
             con.Open();
             cmd.ExecuteNonQuery();
 
-            return Ok(new { success = true, message = "Location confirmed and saved" });
+            return Ok(new
+            {
+                success = true,
+                message = "Location confirmed and saved"
+            });
         }
+
     }
 
 }
