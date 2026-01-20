@@ -23,13 +23,17 @@ public sealed record LoginDto
 // Result returned by Login Stored Procedure (usp_LoginUser)
 public sealed class LoginSpResult
 {
+
+    public int UserID { get; set; }          // MUST match UserID
+    public string FullName { get; set; }     // MUST match FullName
+    public string MobileNumber { get; set; } // MUST match MobileNumber
+    public string EmailID { get; set; }
     public bool Success { get; set; }
 
-    public int loginID { get; set; }
+    
 
-    public string LoginName { get; set; } = string.Empty;
+ 
 
-    public string MobileNo { get; set; } = string.Empty;
 
     public int UserDesignationID { get; set; }     // ✅ MATCH SP
     public string UserDesignationName { get; set; } = string.Empty; // ✅ MATCH SP

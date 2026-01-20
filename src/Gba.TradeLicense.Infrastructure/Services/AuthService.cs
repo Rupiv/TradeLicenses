@@ -53,9 +53,9 @@ public sealed class AuthService : IAuthService
 
         // 🔐 FORCE DESIGNATION AS TRADE_OWNER
         var token = _jwt.CreateAccessToken(
-            user.loginID,
-            user.LoginName,
-            user.MobileNo,
+            user.UserID,
+            user.FullName,
+            user.MobileNumber,
             "TRADE_OWNER"
         );
 
@@ -111,9 +111,9 @@ public sealed class AuthService : IAuthService
 
         // 🔐 CREATE JWT WITH DESIGNATION AS ROLE
         var token = _jwt.CreateAccessToken(
-      result.loginID,
-      result.LoginName,
-      result.MobileNo,
+      result.UserID,
+      result.FullName,
+      result.MobileNumber,
       result.UserDesignationName
   );
 

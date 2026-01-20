@@ -7,7 +7,7 @@
 	<ItemGroup>
 	
 	
-	  <Compile Include="obj\Debug\net8.0\Gba.TradeLicense.Api.GlobalUsings.g.cs" />
+	
 	  <Compile Include="obj\Debug\net8.0\Gba.TradeLicense.Api.MvcApplicationPartsAssemblyInfo.cs" />
 	</ItemGroup>
 	<ItemGroup>
