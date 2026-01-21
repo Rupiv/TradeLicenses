@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Persistence;
 using Gba.TradeLicense.Infrastructure.Security;
@@ -6,7 +7,10 @@ using Gba.TradeLicense.Infrastructure.Services;
 using Gba.TradeLicense.Infrastructure.Sms;
 using Gba.TradeLicense.Infrastructure.Sms.esms_client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 

@@ -1,8 +1,13 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
+using System.IO;
+using System.Threading.Tasks;
 using Dapper;
 using Gba.TradeLicense.Domain.Entities;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace Gba.TradeLicense.Api.Controllers
 {

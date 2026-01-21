@@ -3,6 +3,11 @@ using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Gba.TradeLicense.Application.Models;
+using System.Threading.Tasks;
+using System.Threading;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Linq;
 
 [ApiController]
 [Route("api/licence-application")]
