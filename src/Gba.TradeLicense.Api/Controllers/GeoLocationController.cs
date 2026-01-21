@@ -1,9 +1,15 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace Gba.TradeLicense.Api.Controllers
@@ -19,7 +25,6 @@ namespace Gba.TradeLicense.Api.Controllers
             _config = config;
         }
 
-        // STEP 1: Call KGIS API
         [HttpPost("fetch-road")]
         public async Task<IActionResult> FetchRoadDetails([FromBody] GeoInputDto model)
         {
@@ -27,12 +32,19 @@ namespace Gba.TradeLicense.Api.Controllers
             {
                 applicantId = "1_Get_Roadwidth",
                 parameter = "P1$|$P2",
-                values = model.Longitude.ToString(CultureInfo.InvariantCulture)
-                         + "$|$"
-                         + model.Latitude.ToString(CultureInfo.InvariantCulture)
+                values = model.Latitude.ToString(CultureInfo.InvariantCulture)
+                       + "$|$"
+                       + model.Longitude.ToString(CultureInfo.InvariantCulture)
             };
 
-            using HttpClient client = new HttpClient();
+            using HttpClient client = new HttpClient
+            {
+                Timeout = TimeSpan.FromMinutes(3)
+            };
+
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
 
             var content = new StringContent(
                 JsonConvert.SerializeObject(requestBody),
@@ -56,11 +68,10 @@ namespace Gba.TradeLicense.Api.Controllers
                 });
             }
 
-            // 🔥 FIX IS HERE
             var roadData = JsonConvert.DeserializeObject<List<KgisRoadResponse>>(responseText);
-
             return Ok(roadData);
         }
+
 
 
         [HttpGet("get/{licenceApplicationID}")]
