@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Gba.TradeLicense.Application.Models;
@@ -159,6 +160,22 @@ public class TradeLicenceController : ControllerBase
         );
 
         return Ok(new { Deleted = true });
+    }
+    [HttpGet("user/{userId}/profile")]
+    public async Task<IActionResult> GetUserWithLicence(int userId)
+    {
+        using var db = Db();
+
+        var data = await db.QueryAsync(
+            "usp_GetUserWithLicenceDetails",
+            new { UserID = userId },
+            commandType: CommandType.StoredProcedure
+        );
+
+        if (!data.Any())
+            return NotFound(new { Message = "User not found" });
+
+        return Ok(data);
     }
 
 
