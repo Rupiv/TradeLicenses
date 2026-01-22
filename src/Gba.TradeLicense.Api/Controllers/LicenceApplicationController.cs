@@ -96,6 +96,36 @@ public class LicenceApplicationController : ControllerBase
             Data = data
         });
     }
+    [HttpGet("by-temp-login/{loginId:int}")]
+    public async Task<IActionResult> GetByTempLogin(
+      int loginId,
+      [FromQuery] int pageNumber = 1,
+      [FromQuery] int pageSize = 10)
+    {
+        using var db = CreateConnection();
+
+        using var multi = await db.QueryMultipleAsync(
+            "usp_LicenceApplicationTemp_GetByLogin_Paged",
+            new
+            {
+                LoginID = loginId,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        var totalRecords = await multi.ReadFirstAsync<int>();
+        var data = (await multi.ReadAsync()).ToList();
+
+        return Ok(new
+        {
+            TotalRecords = totalRecords,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Data = data
+        });
+    }
     [HttpGet("paged")]
     public async Task<IActionResult> GetAllApplicationsPaged(
     [FromQuery] int pageNumber = 1,
