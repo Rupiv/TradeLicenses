@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http.Headers;
 using System.Text;
 using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Persistence;
@@ -16,34 +17,24 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 ADD CORS
+// --------------------------------------------------
+// CORS (SINGLE POLICY)
+// --------------------------------------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularPolicy", policy =>
     {
-        policy
-            .WithOrigins("http://localhost:4200") // Angular URL
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // Only if using cookies/auth
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
 // --------------------------------------------------
 // SERVICES
 // --------------------------------------------------
-
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:4200")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
 builder.Services.AddEndpointsApiExplorer();
 
 // Database
@@ -52,8 +43,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
 
-// Application Services
+// HttpClient (KGIS)
+builder.Services.AddHttpClient("KgisClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.Accept.Add(
+        new MediaTypeWithQualityHeaderValue("application/json"));
+    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+});
 
+// Application Services
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
@@ -62,11 +61,9 @@ builder.Services.AddSingleton<KarnatakaSmsService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
 builder.Services.AddScoped<SMSHttpPostClient>();
 
-
 // --------------------------------------------------
 // JWT AUTHENTICATION
 // --------------------------------------------------
-
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var issuer = jwtSection["Issuer"];
 var audience = jwtSection["Audience"];
@@ -107,9 +104,8 @@ builder.Services.AddAuthorization(options =>
 });
 
 // --------------------------------------------------
-// SWAGGER (PRODUCTION ENABLED)
+// SWAGGER
 // --------------------------------------------------
-
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -118,7 +114,6 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
-    // JWT Bearer support in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -148,10 +143,9 @@ builder.Services.AddSwaggerGen(c =>
 // --------------------------------------------------
 // APP PIPELINE
 // --------------------------------------------------
-
 var app = builder.Build();
 
-// Swagger MUST be before routing
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -159,27 +153,30 @@ app.UseSwaggerUI(c =>
     c.DisplayRequestDuration();
 });
 
-// HTTPS (safe even behind IIS)
+// HTTPS (ONLY ONCE)
 app.UseHttpsRedirection();
 
-// 🔑 REQUIRED for endpoint mapping
+// Routing
 app.UseRouting();
 
-// Optional audit middleware
+// CORS (MUST be before auth)
+app.UseCors("AngularPolicy");
+
+// Auth
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Audit / performance logging
 app.Use(async (context, next) =>
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
     await next();
     sw.Stop();
+
+    Console.WriteLine(
+        $"{context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds} ms"
+    );
 });
-
-// 🔹 USE CORS (order matters!)
-app.UseHttpsRedirection();
-
-// Auth
-app.UseCors("AngularPolicy");
-app.UseAuthentication();
-app.UseAuthorization();
 
 // Controllers
 app.MapControllers();

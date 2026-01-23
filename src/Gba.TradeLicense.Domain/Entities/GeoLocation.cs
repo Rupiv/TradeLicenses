@@ -51,7 +51,7 @@ namespace Gba.TradeLicense.Domain.Entities
         public string RoadType { get; set; }
 
        
-        public int? RoadWidthMtrs { get; set; }
+        public string? Road_Width_mtrs { get; set; }
 
         public string RoadCategory { get; set; }
         public string RoadCategoryCode { get; set; }
