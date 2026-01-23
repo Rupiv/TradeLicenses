@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -19,32 +20,33 @@ namespace Gba.TradeLicense.Api.Controllers
     public class GeoLocationController : ControllerBase
     {
         private readonly IConfiguration _config;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public GeoLocationController(IConfiguration config)
+        public GeoLocationController(IConfiguration config, IHttpClientFactory httpClientFactory)
         {
             _config = config;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpPost("fetch-road")]
-        public async Task<IActionResult> FetchRoadDetails([FromBody] GeoInputDto model)
+        public async Task<IActionResult> FetchRoadDetails(
+     [FromBody] GeoInputDto model,
+     CancellationToken ct)
         {
+            decimal latitude = Math.Round(Convert.ToDecimal(model.Latitude), 4);
+            decimal longitude = Math.Round(Convert.ToDecimal(model.Longitude), 4);
+
             var requestBody = new
             {
                 applicantId = "1_Get_Roadwidth",
                 parameter = "P1$|$P2",
-                values = model.Latitude.ToString(CultureInfo.InvariantCulture)
-                       + "$|$"
-                       + model.Longitude.ToString(CultureInfo.InvariantCulture)
+                values =
+                    latitude.ToString("F4", CultureInfo.InvariantCulture)
+                    + "$|$"
+                    + longitude.ToString("F4", CultureInfo.InvariantCulture)
             };
 
-            using HttpClient client = new HttpClient
-            {
-                Timeout = TimeSpan.FromMinutes(3)
-            };
-
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+            var client = _httpClientFactory.CreateClient("KgisClient");
 
             var content = new StringContent(
                 JsonConvert.SerializeObject(requestBody),
@@ -52,12 +54,25 @@ namespace Gba.TradeLicense.Api.Controllers
                 "application/json"
             );
 
-            var response = await client.PostAsync(
-                "https://kgis.ksrsac.in/generic/api/genericselect",
-                content
-            );
+            HttpResponseMessage response;
 
-            var responseText = await response.Content.ReadAsStringAsync();
+            try
+            {
+                response = await client.PostAsync(
+                    "https://kgis.ksrsac.in/generic/api/genericselect",
+                    content,
+                    ct
+                );
+            }
+            catch (TaskCanceledException)
+            {
+                return StatusCode(504, new
+                {
+                    message = "KGIS API timeout"
+                });
+            }
+
+            var responseText = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -74,13 +89,15 @@ namespace Gba.TradeLicense.Api.Controllers
 
 
 
+
+
         [HttpGet("get/{licenceApplicationID}")]
         public IActionResult GetGeoLocation(int licenceApplicationID)
         {
             GeoLocationDto result = null;
 
             using SqlConnection con = new SqlConnection(
-                _config.GetConnectionString("DefaultConnection"));
+                _config.GetConnectionString("Default"));
 
             using SqlCommand cmd = new SqlCommand(
                 "usp_LicenceApplication_Geo_Get", con);
