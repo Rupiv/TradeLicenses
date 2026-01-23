@@ -55,7 +55,7 @@ namespace Gba.TradeLicense.Api.Controllers
 
             using var db = CreateConnection();
 
-            string otp = await db.ExecuteScalarAsync<string>(
+            string? otp = await db.ExecuteScalarAsync<string>(
                 "USP_OTP_PROCESS",
                 new
                 {
