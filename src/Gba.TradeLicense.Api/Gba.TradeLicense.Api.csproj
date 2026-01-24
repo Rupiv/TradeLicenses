@@ -184,6 +184,8 @@
 	<ItemGroup>
 		<PackageReference Include="Dapper" Version="2.1.66" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+		<PackageReference Include="NetTopologySuite" Version="2.6.0" />
+		<PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="4.0.0" />
 		<ProjectReference Include="..\Gba.TradeLicense.Domain\Gba.TradeLicense.Domain.csproj" />
 		<ProjectReference Include="..\Gba.TradeLicense.Application\Gba.TradeLicense.Application.csproj" />
 		<ProjectReference Include="..\Gba.TradeLicense.Infrastructure\Gba.TradeLicense.Infrastructure.csproj" />

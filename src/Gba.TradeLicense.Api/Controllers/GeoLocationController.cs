@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Gba.TradeLicense.Domain.Entities;
+using Gba.TradeLicense.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -21,29 +21,48 @@ namespace Gba.TradeLicense.Api.Controllers
     {
         private readonly IConfiguration _config;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly BbmpBoundaryService _bbmpService;
 
-        public GeoLocationController(IConfiguration config, IHttpClientFactory httpClientFactory)
+        public GeoLocationController(
+            IConfiguration config,
+            IHttpClientFactory httpClientFactory,
+            BbmpBoundaryService bbmpService)
         {
             _config = config;
             _httpClientFactory = httpClientFactory;
+            _bbmpService = bbmpService;
         }
 
+        // ================= FETCH ROAD DETAILS =================
         [HttpPost("fetch-road")]
         public async Task<IActionResult> FetchRoadDetails(
-     [FromBody] GeoInputDto model,
-     CancellationToken ct)
+       [FromBody] GeoInputDto model,
+       CancellationToken ct)
         {
-            decimal latitude = Math.Round(Convert.ToDecimal(model.Latitude), 4);
-            decimal longitude = Math.Round(Convert.ToDecimal(model.Longitude), 4);
+            if (model == null)
+                return BadRequest(new { message = "Invalid request payload" });
+
+            decimal latitude = Math.Round(Convert.ToDecimal(model.Latitude), 6);
+            decimal longitude = Math.Round(Convert.ToDecimal(model.Longitude), 6);
+
+            // 🚫 Outside BBMP / GBA boundary
+            if (!_bbmpService.IsInsideBbmp(latitude, longitude))
+            {
+                return BadRequest(new
+                {
+                    code = "OUTSIDE_GBA",
+                    message = "Location is outside Greater Bengaluru Authority licence jurisdiction"
+                });
+            }
 
             var requestBody = new
             {
                 applicantId = "1_Get_Roadwidth",
                 parameter = "P1$|$P2",
                 values =
-                    latitude.ToString("F4", CultureInfo.InvariantCulture)
+                    longitude.ToString("F4", CultureInfo.InvariantCulture)
                     + "$|$"
-                    + longitude.ToString("F4", CultureInfo.InvariantCulture)
+                    + latitude.ToString("F4", CultureInfo.InvariantCulture)
             };
 
             var client = _httpClientFactory.CreateClient("KgisClient");
@@ -68,7 +87,8 @@ namespace Gba.TradeLicense.Api.Controllers
             {
                 return StatusCode(504, new
                 {
-                    message = "KGIS API timeout"
+                    code = "KGIS_TIMEOUT",
+                    message = "KGIS service timeout. Please try again later."
                 });
             }
 
@@ -76,44 +96,49 @@ namespace Gba.TradeLicense.Api.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                return BadRequest(new
+                return StatusCode(502, new
                 {
+                    code = "KGIS_FAILED",
                     message = "KGIS API failed",
-                    kgisResponse = responseText
+                    details = responseText
                 });
             }
 
-            var roadData = JsonConvert.DeserializeObject<List<KgisRoadResponse>>(responseText);
-            return Ok(roadData);
+            var roadData =
+                JsonConvert.DeserializeObject<List<KgisRoadResponse>>(responseText);
+
+            return Ok(new
+            {
+                code = "SUCCESS",
+                message = "Road width data fetched successfully",
+                data = roadData
+            });
         }
 
-
-
-
-
+        // ================= GET SAVED GEO LOCATION =================
         [HttpGet("get/{licenceApplicationID}")]
         public IActionResult GetGeoLocation(int licenceApplicationID)
         {
             GeoLocationDto result = null;
 
-            using SqlConnection con = new SqlConnection(
-                _config.GetConnectionString("Default"));
+            using SqlConnection con =
+                new SqlConnection(_config.GetConnectionString("Default"));
 
-            using SqlCommand cmd = new SqlCommand(
-                "usp_LicenceApplication_Geo_Get", con);
+            using SqlCommand cmd =
+                new SqlCommand("usp_LicenceApplication_Geo_Get", con);
 
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@LicenceApplicationID", licenceApplicationID);
 
             con.Open();
             using SqlDataReader dr = cmd.ExecuteReader();
+
             if (dr.Read())
             {
                 result = new GeoLocationDto
                 {
                     Success = Convert.ToBoolean(dr["Success"]),
                     Message = dr["Message"].ToString(),
-
                     Latitude = dr["Latitude"] as decimal?,
                     Longitude = dr["Longitude"] as decimal?,
                     RoadID = dr["RoadID"]?.ToString(),
@@ -128,22 +153,19 @@ namespace Gba.TradeLicense.Api.Controllers
             return Ok(result);
         }
 
-        // STEP 2: Save after confirmation
+        // ================= CONFIRM & SAVE =================
         [HttpPost("confirm-save")]
         public IActionResult ConfirmAndSave(
-     [FromBody] LicenceGeoConfirmDto model
- )
+            [FromBody] LicenceGeoConfirmDto model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            using SqlConnection con = new SqlConnection(
-                _config.GetConnectionString("Default")
-            );
+            using SqlConnection con =
+                new SqlConnection(_config.GetConnectionString("Default"));
 
-            using SqlCommand cmd = new SqlCommand(
-                "usp_LicenceApplication_Geo_Save", con
-            );
+            using SqlCommand cmd =
+                new SqlCommand("usp_LicenceApplication_Geo_Save", con);
 
             cmd.CommandType = CommandType.StoredProcedure;
 
@@ -165,7 +187,5 @@ namespace Gba.TradeLicense.Api.Controllers
                 message = "Location confirmed and saved"
             });
         }
-
     }
-
 }

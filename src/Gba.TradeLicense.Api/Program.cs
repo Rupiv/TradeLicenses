@@ -60,6 +60,7 @@ builder.Services.AddScoped<ITradeApplicationService, TradeApplicationService>();
 builder.Services.AddSingleton<KarnatakaSmsService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
 builder.Services.AddScoped<SMSHttpPostClient>();
+builder.Services.AddSingleton<BbmpBoundaryService>();
 
 // --------------------------------------------------
 // JWT AUTHENTICATION
