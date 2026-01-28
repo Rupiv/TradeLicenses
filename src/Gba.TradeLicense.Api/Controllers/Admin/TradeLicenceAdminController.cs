@@ -26,6 +26,7 @@ namespace TradeLicence.API.Controllers
         // ============================================================
         // ADMIN – GET ALL APPLICATIONS WITH FILTERS
         // ============================================================
+
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
       int? zoneId,
@@ -39,33 +40,31 @@ namespace TradeLicence.API.Controllers
         {
             using var con = Db();
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@ZoneID", zoneId);
-            parameters.Add("@MohID", mohId);
-            parameters.Add("@WardID", wardId);
-            parameters.Add("@LicenceApplicationID", licenceApplicationId);
-            parameters.Add("@ApplicationNumber", applicationNumber);
-            parameters.Add("@PageNumber", pageNumber);
-            parameters.Add("@PageSize", pageSize);
-            parameters.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var p = new DynamicParameters();
+            p.Add("@ZoneID", zoneId);
+            p.Add("@MohID", mohId);
+            p.Add("@WardID", wardId);
+            p.Add("@LicenceApplicationID", licenceApplicationId);
+            p.Add("@ApplicationNumber", applicationNumber);
+            p.Add("@PageNumber", pageNumber);
+            p.Add("@PageSize", pageSize);
+            p.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             var data = await con.QueryAsync(
                 "sp_GetTradeLicenceApplications_Admin",
-                parameters,
+                p,
                 commandType: CommandType.StoredProcedure
             );
 
-            var totalCount = parameters.Get<int>("@TotalCount");
-
             return Ok(new
             {
-                TotalRecords = totalCount,
+                TotalRecords = p.Get<int>("@TotalCount"),
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
                 Data = data
             });
         }
+
 
 
         // ============================================================
