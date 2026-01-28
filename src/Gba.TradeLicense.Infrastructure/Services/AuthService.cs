@@ -69,11 +69,11 @@ public sealed class AuthService : IAuthService
 
     // ================= LOGIN =================
     public async Task<LoginResult> LoginAsync(
-        string usernameOrPhone,
-        string password,
-        string ipAddress,
-        string browser,
-        CancellationToken ct)
+      string usernameOrPhone,
+      string password,
+      string ipAddress,
+      string browser,
+      CancellationToken ct)
     {
         using var db = CreateConnection();
 
@@ -109,15 +109,13 @@ public sealed class AuthService : IAuthService
             );
         }
 
-        // 🔐 CREATE JWT WITH DESIGNATION AS ROLE
+        // 🔐 CREATE JWT (MATCHES EXISTING HELPER SIGNATURE)
         var token = _jwt.CreateAccessToken(
-      result.UserID,
-      result.FullName,
-      result.MobileNumber,
-      result.UserDesignationName
-  );
-
-      
+            result.UserID,                    // loginID
+            result.FullName,                  // loginName
+            result.MobileNumber,              // mobile
+            result.UserDesignationName        // designation (role)
+        );
 
         return new LoginResult(
             Success: true,
@@ -126,6 +124,8 @@ public sealed class AuthService : IAuthService
             OtpRequired: false
         );
     }
+
+
 
     // ================= SEND OTP =================
     public async Task<OtpSendResult> SendOtpAsync(OtpSendRequest request, CancellationToken ct)
