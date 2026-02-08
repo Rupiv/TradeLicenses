@@ -2,6 +2,7 @@
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Gba.TradeLicense.Domain.Entities;
 
 namespace Gba.TradeLicense.Api.Controllers.Approver
 {
@@ -27,42 +28,46 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         // ======================================================
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
-            int loginId,                      // approver loginID
+            int loginId,
             int? mohId,
             int? wardId,
             int? licenceApplicationId,
             string? applicationNumber,
             int pageNumber = 1,
-            int pageSize = 10
-        )
+            int pageSize = 10)
         {
             using var con = Db();
 
-            var p = new DynamicParameters();
-            p.Add("@LoginID", loginId);
-            p.Add("@MohID", mohId);
-            p.Add("@WardID", wardId);
-            p.Add("@LicenceApplicationID", licenceApplicationId);
-            p.Add("@ApplicationNumber", applicationNumber);
-            p.Add("@PageNumber", pageNumber);
-            p.Add("@PageSize", pageSize);
-            p.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var parameters = new DynamicParameters();
+            parameters.Add("@LoginID", loginId);
+            parameters.Add("@MohID", mohId);
+            parameters.Add("@WardID", wardId);
+            parameters.Add("@LicenceApplicationID", licenceApplicationId);
+            parameters.Add("@ApplicationNumber", applicationNumber);
+            parameters.Add("@PageNumber", pageNumber);
+            parameters.Add("@PageSize", pageSize);
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
 
-            var data = await con.QueryAsync(
-                "sp_GetTradeLicenceApplications_Approver",
-                p,
-                commandType: CommandType.StoredProcedure
-            );
+            var applications =
+                await con.QueryAsync<TradeLicenceApproverApplicationDto>(
+                    "sp_GetTradeLicenceApplications_Approver",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+            var totalCount = parameters.Get<int>("@TotalCount");
 
             return Ok(new
             {
                 Role = "Approver",
                 Status = "APPLIED",
                 LoginID = loginId,
-                TotalRecords = p.Get<int>("@TotalCount"),
+                TotalRecords = totalCount,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Data = data
+                Data = applications
             });
         }
     }
