@@ -17,7 +17,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         private IDbConnection Db()
-            => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            => new SqlConnection(_config.GetConnectionString("Default"));
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
