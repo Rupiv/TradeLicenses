@@ -61,6 +61,7 @@ builder.Services.AddSingleton<KarnatakaSmsService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
 builder.Services.AddScoped<SMSHttpPostClient>();
 builder.Services.AddSingleton<BbmpBoundaryService>();
+builder.Services.AddMemoryCache();
 
 // --------------------------------------------------
 // JWT AUTHENTICATION

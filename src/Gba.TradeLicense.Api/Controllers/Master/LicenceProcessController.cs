@@ -1,8 +1,9 @@
 ﻿using System.Data;
+using Dapper;
 using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Dapper;
+using Microsoft.Extensions.Configuration;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
@@ -30,6 +31,59 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             );
             return Ok(data);
         }
+        [HttpPost("submit-action")]
+        public async Task<IActionResult> SubmitAction([FromBody] LicenceActionRequest request)
+        {
+            if (request == null)
+                return BadRequest("Invalid request.");
+
+            using var db = Db();
+
+            var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                "usp_Licence_SubmitAction",
+                new
+                {
+                    Mode = "SUBMIT",
+                    request.LicenceApplicationID,
+                    request.LoginID,
+                    request.LicenceProcessID,
+                    request.CurrentStatus,
+                    request.Remarks,
+                    request.ActionReasonIds
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            if (result != null && result.Success == 1)
+                return Ok(result);
+
+            return BadRequest(result);
+        }
+
+        [HttpGet("application/{licenceApplicationID}/timeline")]
+        public async Task<IActionResult> GetApplicationTimeline(int licenceApplicationID)
+        {
+            using var db = Db();
+
+            var result = await db.QueryAsync<ApplicationTimelineDto>(
+                "usp_Licence_SubmitAction",
+                new
+                {
+                    Mode = "GET",
+                    LicenceApplicationID = licenceApplicationID
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(new
+            {
+                Success = true,
+                LicenceApplicationID = licenceApplicationID,
+                Timeline = result
+            });
+        }
+
+
 
         [HttpPost]
         public async Task<IActionResult> Create(LicenceProcessDto dto)

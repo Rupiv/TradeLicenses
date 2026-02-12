@@ -258,17 +258,33 @@ public class TradeLicenceController : ControllerBase
     {
         using var db = Db();
 
-        await db.ExecuteAsync(
-            "usp_TradeLicence_CRUD",
-            new
-            {
-                Action = "FINAL_SUBMIT",
-                tradeLicenceID = id
-            },
-            commandType: CommandType.StoredProcedure
-        );
+        try
+        {
+            var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                "usp_TradeLicence_CRUD",
+                new
+                {
+                    Action = "FINAL_SUBMIT",
+                    tradeLicenceID = id
+                },
+                commandType: CommandType.StoredProcedure
+            );
 
-        return Ok(new { Submitted = true });
+            return Ok(new
+            {
+                Submitted = result?.Submitted ?? false,
+                TradeLicenceID = result?.tradeLicenceID
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new
+            {
+                Submitted = false,
+                Error = ex.Message
+            });
+        }
     }
+
 }
 
