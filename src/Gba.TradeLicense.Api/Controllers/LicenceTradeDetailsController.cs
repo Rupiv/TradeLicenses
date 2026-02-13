@@ -105,4 +105,23 @@ public class LicenceTradeDetailsController : ControllerBase
 
         return Ok(list);
     }
+    // ================= FINAL SUBMIT =================
+    [HttpPost("final-submit/{licenceApplicationID:long}")]
+    public async Task<IActionResult> FinalSubmit(long licenceApplicationID)
+    {
+        using var db = CreateConnection();
+
+        await db.ExecuteAsync(
+            "usp_LicenceTradeDetails_CRUD",
+            new
+            {
+                Action = "FINAL_SUBMIT",
+                LicenceApplicationID = licenceApplicationID
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        return Ok(new { TradeDetailsSubmitted = true });
+    }
+
 }
