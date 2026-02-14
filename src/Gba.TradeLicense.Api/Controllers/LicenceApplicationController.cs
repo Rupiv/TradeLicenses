@@ -8,7 +8,6 @@ using System.Threading;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
-using System.Collections.Generic;
 
 [ApiController]
 [Route("api/licence-application")]
@@ -42,9 +41,9 @@ public class LicenceApplicationController : ControllerBase
                 dto.TradeTypeID,
 
                 BescomRRNumber = dto.BescomRRNumber ?? "",
-                GSTNumber = dto.GSTNumber ?? "",
-                PANNumber = dto.PANNumber ?? "",
-                IsParkingAreaProvided= dto.IsParkingAreaProvided ,
+                TINNumber = dto.TINNumber ?? "",
+                VATNumber = dto.VATNumber ?? "",
+
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
 
@@ -87,10 +86,10 @@ public class LicenceApplicationController : ControllerBase
                 dto.TradeTypeID,
 
                 BescomRRNumber = dto.BescomRRNumber ?? "",
-                GSTNumber = dto.GSTNumber ?? "",
-                PANNumber = dto.PANNumber ?? "",
-                IsParkingAreaProvided =  dto.IsParkingAreaProvided ,
-    dto.LicenceFromDate,
+                TINNumber = dto.TINNumber ?? "",
+                VATNumber = dto.VATNumber ?? "",
+
+                dto.LicenceFromDate,
                 dto.LicenceToDate,
 
                 dto.InspectingOfficerID,
@@ -197,9 +196,8 @@ public class LicenceApplicationController : ControllerBase
     {
         using var db = CreateConnection();
 
-        var result = await db.QueryFirstOrDefaultAsync<dynamic>(
-
-              "usp_LicenceApplication_CRUD",
+        var result = await db.QuerySingleAsync<dynamic>(
+            "usp_LicenceApplication_CRUD",
             new
             {
                 Action = "FINAL_SUBMIT",
@@ -208,32 +206,10 @@ public class LicenceApplicationController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        var row = result as IDictionary<string, object>;
-        if (row != null && row.ContainsKey("ErrorMessage"))
-        {
-            return BadRequest(new
-            {
-                Submitted = false,
-                ErrorMessage = row["ErrorMessage"],
-                ErrorLine = row.ContainsKey("ErrorLine") ? row["ErrorLine"] : null,
-                ErrorProcedure = row.ContainsKey("ErrorProcedure") ? row["ErrorProcedure"] : null
-            });
-        }
-
-        if (row == null || !row.ContainsKey("ApplicationNumber"))
-        {
-            return BadRequest(new
-            {
-                Submitted = false,
-                ErrorMessage = "Final submit did not return expected result."
-            });
-        }
-
         return Ok(new
         {
             Submitted = true,
-            ApplicationNumber = row["ApplicationNumber"],
-            LicenceApplicationID = row.ContainsKey("licenceApplicationID") ? row["licenceApplicationID"] : null
+            ApplicationNumber = result.ApplicationNumber
         });
     }
 
