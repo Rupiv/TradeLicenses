@@ -230,5 +230,33 @@ namespace Gba.TradeLicense.Api.Controllers
                 easebuzz.payoutAPI(cfg.Email, payoutDate.ToString("yyyy-MM-dd"))
             ));
         }
+
+
+        /* ====================================================
+                         SUCCESS
+          ========================================================*/
+        [HttpPost("success")]
+        public IActionResult PaymentSuccess([FromForm] IFormCollection form)
+        {
+            var txnid = form["txnid"].ToString();
+            var amount = form["amount"].ToString();
+            var email = form["email"].ToString();
+            var phone = form["phone"].ToString();
+            var corporationId = form["udf1"].ToString(); // you sent this
+            var licenceApplicationId = form["udf2"].ToString();
+
+            // (optional) verify hash here
+
+            return Redirect(
+                $"http://localhost:4200/trader/payment-success" +
+                $"?txnid={txnid}" +
+                $"&amount={amount}" +
+                $"&email={email}" +
+                $"&phone={phone}" +
+                $"&corporationId={corporationId}" +
+                $"&applicationNo={licenceApplicationId}"
+            );
+        }
+
     }
 }
