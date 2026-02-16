@@ -31,5 +31,12 @@ namespace Gba.TradeLicense.Domain.Entities
         public string WardName { get; set; }
         public string ApplicationStatus { get; set; }
     }
+    public class ApproverDashboardDto
+    {
+        public int TotalApplied { get; set; }
+        public int TotalObjection { get; set; }
+        public int TotalRejected { get; set; }
+        public int GrandTotal { get; set; }
+    }
 
 }

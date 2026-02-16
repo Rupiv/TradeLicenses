@@ -24,7 +24,7 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         }
 
         // ======================================================
-        // APPROVER – APPLIED APPLICATIONS (ZONE WISE)
+        // APPROVER – APPLICATION LIST (PAGED + SEARCH)
         // ======================================================
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
@@ -39,6 +39,7 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
             using var con = Db();
 
             var parameters = new DynamicParameters();
+            parameters.Add("@Action", "LIST");
             parameters.Add("@LoginID", loginId);
             parameters.Add("@MohID", mohId);
             parameters.Add("@WardID", wardId);
@@ -62,12 +63,95 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
             return Ok(new
             {
                 Role = "Approver",
-                Status = "APPLIED",
+                Mode = "LIST",
                 LoginID = loginId,
                 TotalRecords = totalCount,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 Data = applications
+            });
+        }
+
+        // ======================================================
+        // APPROVER – DASHBOARD COUNTS
+        // ======================================================
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard(
+      int loginId,
+      int? mohId,
+      int? wardId,
+      string? applicationNumber)
+        {
+            using var con = Db();
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@Action", "DASHBOARD");
+            parameters.Add("@LoginID", loginId);
+            parameters.Add("@MohID", mohId);
+            parameters.Add("@WardID", wardId);
+            parameters.Add("@LicenceApplicationID", null);
+            parameters.Add("@ApplicationNumber", applicationNumber);
+            parameters.Add("@PageNumber", 1);
+            parameters.Add("@PageSize", 10);
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
+
+            var dashboard =
+                await con.QueryFirstOrDefaultAsync<ApproverDashboardDto>(
+                    "sp_GetTradeLicenceApplications_Approver",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+            return Ok(new
+            {
+                Role = "Approver",
+                Mode = "DASHBOARD",
+                LoginID = loginId,
+                Data = dashboard
+            });
+        }
+
+
+        // ======================================================
+        // APPROVER – LOOKUP (ZONE + WARD)
+        // ======================================================
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetLookup(int loginId)
+        {
+            using var con = Db();
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@Action", "LOOKUP");
+            parameters.Add("@LoginID", loginId);
+            parameters.Add("@MohID", null);
+            parameters.Add("@WardID", null);
+            parameters.Add("@LicenceApplicationID", null);
+            parameters.Add("@ApplicationNumber", null);
+            parameters.Add("@PageNumber", 1);
+            parameters.Add("@PageSize", 10);
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
+
+            using var multi =
+                await con.QueryMultipleAsync(
+                    "sp_GetTradeLicenceApplications_Approver",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+            var zones = await multi.ReadAsync<dynamic>();
+            var wards = await multi.ReadAsync<dynamic>();
+
+            return Ok(new
+            {
+                Role = "Approver",
+                Mode = "LOOKUP",
+                LoginID = loginId,
+                Zones = zones,
+                Wards = wards
             });
         }
     }

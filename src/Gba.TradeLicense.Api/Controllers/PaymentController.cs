@@ -195,8 +195,8 @@ namespace Gba.TradeLicense.Api.Controllers
                 easebuzz.transactionDateAPI(cfg.Email, transactionDate.ToString("yyyy-MM-dd"))
             ));
         }
-        [HttpPost("success")]
-        public IActionResult PaymentSuccess([FromForm] IFormCollection form)
+        [HttpPost("successs")]
+        public IActionResult PaymentSuccesss([FromForm] IFormCollection form)
         {
             var txnid = form["txnid"].ToString();
             var amount = form["amount"].ToString();

@@ -30,10 +30,11 @@ namespace Gba.TradeLicense.Domain.Entities
         /* ===== GEO LOCATION ===== */
         public decimal? Latitude { get; set; }
         public decimal? Longitude { get; set; }
-        public int? RoadID { get; set; }
-        public decimal? RoadWidthMtrs { get; set; }
-        public string RoadCategoryCode { get; set; }
-        public string RoadCategory { get; set; }
+        public string? RoadID { get; set; }
+        public int? RoadWidthMtrs { get; set; }
+        public string? RoadCategoryCode { get; set; }
+        public string? RoadCategory { get; set; }
+
         public bool IsConfirmed { get; set; }
         public DateTime? EntryDate { get; set; }
     }
