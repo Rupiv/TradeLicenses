@@ -33,13 +33,13 @@ namespace TradeLicence.API.Controllers
 
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
-       int? zoneId,
-       int? mohId,
-       int? wardId,
-       int? licenceApplicationId,
-       string? applicationNumber,
-       int pageNumber = 1,
-       int pageSize = 10)
+     int? zoneId,
+     int? mohId,
+     int? wardId,
+     int? licenceApplicationId,
+     string? applicationNumber,
+     int pageNumber = 1,
+     int pageSize = 10)
         {
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize <= 0) pageSize = 10;
@@ -49,40 +49,78 @@ namespace TradeLicence.API.Controllers
                 ? null
                 : applicationNumber.Trim();
 
-            using var con = Db(); // IDbConnection
+            using var con = Db();
 
             var parameters = new DynamicParameters();
+
+            parameters.Add("@Action", "LIST");   // ✅ IMPORTANT
+
             parameters.Add("@ZoneID", zoneId);
             parameters.Add("@MohID", mohId);
             parameters.Add("@WardID", wardId);
             parameters.Add("@LicenceApplicationID", licenceApplicationId);
             parameters.Add("@ApplicationNumber", applicationNumber);
+
             parameters.Add("@PageNumber", pageNumber);
             parameters.Add("@PageSize", pageSize);
-            parameters.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            var result = await con.QueryAsync<dynamic>(
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
+
+            var data = await con.QueryAsync<dynamic>(
                 "sp_GetTradeLicenceApplications_Admin",
                 parameters,
-                commandType: CommandType.StoredProcedure,
-                commandTimeout: 30);
+                commandType: CommandType.StoredProcedure);
 
             var totalRecords = parameters.Get<int>("@TotalCount");
 
             return Ok(new
             {
+                Role = "Admin",
+                Mode = "LIST",
                 TotalRecords = totalRecords,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 TotalPages = totalRecords == 0
                     ? 0
                     : (int)Math.Ceiling((double)totalRecords / pageSize),
-                Data = result
+                Data = data
             });
         }
 
 
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard(
+    int? zoneId,
+    int? mohId,
+    int? wardId)
+        {
+            using var con = Db();
 
+            var parameters = new DynamicParameters();
+
+            parameters.Add("@Action", "DASHBOARD"); // ✅ IMPORTANT
+
+            parameters.Add("@ZoneID", zoneId);
+            parameters.Add("@MohID", mohId);
+            parameters.Add("@WardID", wardId);
+
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
+
+            var dashboard = await con.QueryFirstAsync<dynamic>(
+                "sp_GetTradeLicenceApplications_Admin",
+                parameters,
+                commandType: CommandType.StoredProcedure);
+
+            return Ok(new
+            {
+                Role = "Admin",
+                Dashboard = dashboard
+            });
+        }
 
 
 

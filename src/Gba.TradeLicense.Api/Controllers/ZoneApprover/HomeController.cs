@@ -24,7 +24,7 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
         }
 
         // ======================================================
-        // ZONE APPROVER – INSPECTED / REJECTED / OBJECTION
+        // ZONE APPROVER – APPLICATION LIST
         // ======================================================
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
@@ -39,6 +39,8 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
             using var con = Db();
 
             var parameters = new DynamicParameters();
+
+            parameters.Add("@Action", "LIST");
             parameters.Add("@LoginID", loginId);
             parameters.Add("@MohID", mohId);
             parameters.Add("@WardID", wardId);
@@ -46,6 +48,7 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
             parameters.Add("@ApplicationNumber", applicationNumber);
             parameters.Add("@PageNumber", pageNumber);
             parameters.Add("@PageSize", pageSize);
+
             parameters.Add("@TotalCount",
                 dbType: DbType.Int32,
                 direction: ParameterDirection.Output);
@@ -70,5 +73,44 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
                 Data = applications
             });
         }
+
+
+        // ======================================================
+        // ZONE APPROVER – DASHBOARD COUNTS
+        // ======================================================
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard(
+      int loginId,
+      int? mohId,
+      int? wardId)
+        {
+            using var con = Db();
+
+            var parameters = new DynamicParameters();
+
+            parameters.Add("@Action", "DASHBOARD");
+            parameters.Add("@LoginID", loginId);
+            parameters.Add("@MohID", mohId);
+            parameters.Add("@WardID", wardId);
+
+            // ✅ ADD THIS (IMPORTANT)
+            parameters.Add("@TotalCount",
+                dbType: DbType.Int32,
+                direction: ParameterDirection.Output);
+
+            var dashboard =
+                await con.QueryFirstOrDefaultAsync(
+                    "sp_GetTradeLicenceApplications_ZoneApprover",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+
+            return Ok(new
+            {
+                Role = "ZoneApprover",
+                Dashboard = dashboard
+            });
+        }
+
     }
 }
