@@ -41,8 +41,9 @@ public class LicenceApplicationController : ControllerBase
                 dto.TradeTypeID,
 
                 BescomRRNumber = dto.BescomRRNumber ?? "",
-                TINNumber = dto.TINNumber ?? "",
-                VATNumber = dto.VATNumber ?? "",
+                GSTNumber = dto.GSTNumber ?? "",
+                PANNumber = dto.PANNumber ?? "",
+
 
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
@@ -86,8 +87,8 @@ public class LicenceApplicationController : ControllerBase
                 dto.TradeTypeID,
 
                 BescomRRNumber = dto.BescomRRNumber ?? "",
-                TINNumber = dto.TINNumber ?? "",
-                VATNumber = dto.VATNumber ?? "",
+                GSTNumber = dto.GSTNumber ?? "",
+                PANNumber = dto.PANNumber ?? "",
 
                 dto.LicenceFromDate,
                 dto.LicenceToDate,
@@ -209,8 +210,10 @@ public class LicenceApplicationController : ControllerBase
         return Ok(new
         {
             Submitted = true,
-            ApplicationNumber = result.ApplicationNumber
+            ApplicationNumber = result.ApplicationNumber,
+            LicenceApplicationID = result.licenceApplicationID
         });
+
     }
 
     // ================= GET BY LOGIN (MAIN) =================

@@ -24,8 +24,8 @@ public class LicenceTradeDetailsController : ControllerBase
     // ================= INSERT TEMP =================
     [HttpPost("temp")]
     public async Task<IActionResult> InsertTemp(
-        [FromBody] LicenceTradeDetailsUpsertDto dto,
-        CancellationToken ct)
+     [FromBody] LicenceTradeDetailsUpsertDto dto,
+     CancellationToken ct)
     {
         using var db = CreateConnection();
 
@@ -36,7 +36,7 @@ public class LicenceTradeDetailsController : ControllerBase
                 Action = "INSERT_TEMP",
                 dto.TradeSubID,
                 dto.TradeFee,
-                dto.LicenceApplicationID
+                TempLicenceApplicationID = dto.LicenceApplicationID
             },
             commandType: CommandType.StoredProcedure
         );
@@ -44,6 +44,51 @@ public class LicenceTradeDetailsController : ControllerBase
         return Ok(new { LicenceTradeDetailsID = id });
     }
 
+    [HttpGet("temp/full-details/{licenceApplicationID:long}")]
+    public async Task<IActionResult> GetTempFullDetails(long licenceApplicationID, CancellationToken ct)
+    {
+        using var db = CreateConnection();
+
+        try
+        {
+            using var multi = await db.QueryMultipleAsync(
+                "usp_LicenceApplicationTemp_GetFullDetails",
+                new { licenceApplicationID },
+                commandType: CommandType.StoredProcedure
+            );
+
+            var application = (await multi.ReadAsync<dynamic>()).FirstOrDefault();
+            var tradeDetails = (await multi.ReadAsync<dynamic>()).ToList();
+            var documents = (await multi.ReadAsync<dynamic>()).ToList();
+            var geoLocations = (await multi.ReadAsync<dynamic>()).ToList();
+
+            if (application == null)
+            {
+                return NotFound(new
+                {
+                    Message = "Temp licence application not found.",
+                    LicenceApplicationID = licenceApplicationID
+                });
+            }
+
+            return Ok(new
+            {
+                LicenceApplicationID = licenceApplicationID,
+                Application = application,
+                TradeDetails = tradeDetails,
+                Documents = documents,
+                GeoLocations = geoLocations
+            });
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(new
+            {
+                Message = ex.Message,
+                LicenceApplicationID = licenceApplicationID
+            });
+        }
+    }
     // ================= UPDATE TEMP =================
     [HttpPut("temp/{id:long}")]
     public async Task<IActionResult> UpdateTemp(
