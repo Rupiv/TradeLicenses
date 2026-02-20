@@ -128,6 +128,15 @@ public class LicenceApplicationController : ControllerBase
 
         return Ok(result);
     }
+    public class DbResponse
+    {
+        public bool Submitted { get; set; }
+        public string Message { get; set; }
+        public string ApplicationNumber { get; set; }
+        public long? LicenceApplicationID { get; set; }
+        public int? ErrorLine { get; set; }
+        public string ErrorProcedure { get; set; }
+    }
 
     // ================= SEARCH =================
     [HttpGet("search")]
@@ -197,24 +206,32 @@ public class LicenceApplicationController : ControllerBase
     {
         using var db = CreateConnection();
 
-        var result = await db.QuerySingleAsync<dynamic>(
+        var result = await db.QueryFirstOrDefaultAsync<DbResponse>(
             "usp_LicenceApplication_CRUD",
             new
             {
                 Action = "FINAL_SUBMIT",
-                LicenceApplicationID = id
+                licenceApplicationID = id
             },
             commandType: CommandType.StoredProcedure
         );
 
-        return Ok(new
+        // safety check (DB returned nothing)
+        if (result == null)
         {
-            Submitted = true,
-            ApplicationNumber = result.ApplicationNumber,
-            LicenceApplicationID = result.licenceApplicationID
-        });
+            return BadRequest(new DbResponse
+            {
+                Submitted = false,
+                Message = "No response from database."
+            });
+        }
 
+        // return exactly what SQL sends
+        return Ok(result);
     }
+
+
+
 
     // ================= GET BY LOGIN (MAIN) =================
     [HttpGet("by-login/{loginId:int}")]
