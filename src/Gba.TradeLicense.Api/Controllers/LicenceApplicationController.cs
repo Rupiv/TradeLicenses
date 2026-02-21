@@ -233,35 +233,141 @@ public class LicenceApplicationController : ControllerBase
 
 
 
-    // ================= GET BY LOGIN (MAIN) =================
+    // ================= GET BY LOGIN (PAGINATED) =================
+    // ================= GET BY LOGIN (PAGINATED) =================
     [HttpGet("by-login/{loginId:int}")]
     public async Task<IActionResult> GetByLogin(
-        int loginId,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10)
+     int loginId,
+     [FromQuery] int pageNumber = 1,
+     [FromQuery] int pageSize = 10,
+     CancellationToken ct = default)
     {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize <= 0) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
+
         using var db = CreateConnection();
 
-        using var multi = await db.QueryMultipleAsync(
+        var rows = (await db.QueryAsync(
             "usp_LicenceApplication_GetByLogin_Paged",
             new
             {
-                LoginID = loginId,
+                UserID = loginId,
                 PageNumber = pageNumber,
                 PageSize = pageSize
             },
             commandType: CommandType.StoredProcedure
-        );
+        )).ToList();
 
-        var totalRecords = await multi.ReadFirstAsync<int>();
-        var data = (await multi.ReadAsync()).ToList();
+        if (!rows.Any())
+        {
+            return Ok(new
+            {
+                TotalRecords = 0,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Data = new List<object>()
+            });
+        }
+
+        int totalRecords = (int)rows.First().TotalRecords;
+
+        var groupedData = rows
+            .GroupBy(r => (long)r.licenceApplicationID)
+            .Select(g =>
+            {
+                var first = g.First();
+
+                return new
+                {
+                    // ================= USER DETAILS =================
+                    first.UserID,
+                    first.FullName,
+                    first.UserMobile,
+                    first.UserEmail,
+                    first.UserCreatedDate,
+
+                    // ================= APPLICATION DETAILS =================
+                    first.licenceApplicationID,
+                    first.applicationNumber,
+                    first.finanicalYearID,
+                    first.tradeTypeID,
+                    first.bescomRRNumber,
+                    first.GSTNumber,
+                    first.PANNumber,
+                    first.applicationSubmitDate,
+                    first.applicationEntryDate,
+                    first.acknowledgementNumber,
+                    first.acknowledgementDate,
+                    first.receiptNumber,
+                    first.receiptDate,
+                    first.licenceFromDate,
+                    first.licenceToDate,
+                    first.NoOfYearsApplied,
+                    first.docsSubmitted,
+                    first.jathaStatus,
+                    first.ChallanNo,
+                    first.ApplicationIsActive,
+
+                    // ================= STATUS =================
+                    first.licenceApplicationStatusName,
+                    first.CurrentStatusDescription,
+                    first.licenceStatusName,
+
+                    // ================= LICENCE MASTER =================
+                    first.tradeLicenceID,
+                    first.applicantName,
+                    first.tradeName,
+                    first.doorNumber,
+                    first.address1,
+                    first.address2,
+                    first.address3,
+                    first.pincode,
+                    first.ApplicantMobile,
+                    first.ApplicantEmail,
+                    first.licenceNumber,
+                    first.licenceCommencementDate,
+
+                    // ================= MOH =================
+                    first.mohcd,
+                    first.mohname,
+                    first.mohshortname,
+                    first.MohAddress,
+
+                    // ================= GEO =================
+                    first.Latitude,
+                    first.Longitude,
+                    first.RoadID,
+                    first.RoadWidthMtrs,
+                    first.RoadCategoryCode,
+                    first.RoadCategory,
+                    first.GeoConfirmed,
+
+                    // ================= DOCUMENTS =================
+                    Documents = g
+                        .Where(d => d.ApplicationDocumentID != null)
+                        .GroupBy(d => d.ApplicationDocumentID)
+                        .Select(d => new
+                        {
+                            ApplicationDocumentID = d.First().ApplicationDocumentID,
+                            documentName = d.First().documentName,
+                            FileName = d.First().FileName,
+                            FilePath = d.First().FilePath,
+                            FileExtension = d.First().FileExtension,
+                            FileSizeKB = d.First().FileSizeKB,
+                            DocumentIsActive = d.First().DocumentIsActive
+                        })
+                        .ToList()
+                };
+            })
+            .ToList();
 
         return Ok(new
         {
             TotalRecords = totalRecords,
             PageNumber = pageNumber,
             PageSize = pageSize,
-            Data = data
+            Data = groupedData
         });
     }
 

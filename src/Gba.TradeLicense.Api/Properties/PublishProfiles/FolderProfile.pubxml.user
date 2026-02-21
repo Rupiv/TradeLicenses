@@ -2,8 +2,8 @@
 <!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
 <Project>
   <PropertyGroup>
-    <_PublishTargetUrl>C:\Greator Authority Banglore\publish</_PublishTargetUrl>
-    <History>True|2026-01-09T07:17:44.4805240Z||;True|2026-01-09T12:09:44.6688212+05:30||;True|2026-01-09T11:35:42.3042979+05:30||;</History>
+    <_PublishTargetUrl>C:\Greator Authority Banglore\gba</_PublishTargetUrl>
+    <History>True|2026-02-21T07:59:23.6181453Z||;True|2026-02-20T17:45:00.9831408+05:30||;True|2026-02-20T17:24:54.7457507+05:30||;True|2026-02-20T16:55:44.4847574+05:30||;True|2026-02-20T16:49:55.9565517+05:30||;True|2026-02-20T13:45:47.4854927+05:30||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>
