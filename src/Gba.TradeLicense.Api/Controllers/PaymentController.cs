@@ -248,7 +248,7 @@ namespace Gba.TradeLicense.Api.Controllers
             // (optional) verify hash here
 
             return Redirect(
-                $"http://localhost:4200/trader/payment-success" +
+                $"https://pickitover.com/gba/trader/payment-success" +
                 $"?txnid={txnid}" +
                 $"&amount={amount}" +
                 $"&email={email}" +
