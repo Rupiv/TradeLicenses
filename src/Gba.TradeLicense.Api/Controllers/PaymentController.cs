@@ -1,16 +1,18 @@
-﻿using System;
-using System.Data;
-using System.Linq;
-using Dapper;
+﻿using Dapper;
 using Gba.TradeLicense.Domain.Entities;
+using Gba.TradeLicense.Infrastructure.Security;
 using Gba.TradeLicense.Infrastructure.Services.PaymentGateway;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Microsoft.AspNetCore.Authorization;
+using System;
+using System.Data;
+using System.Linq;
+using System.Security.Cryptography;
 
 namespace Gba.TradeLicense.Api.Controllers
 {
@@ -237,12 +239,12 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ====================================================
                          SUCCESS
           ========================================================*/
-        [HttpPost("success")]
+        [HttpPost("payment-success")]
         public IActionResult PaymentSuccess([FromForm] IFormCollection form)
         {
             try
             {
-                // ✅ Safe parsing (prevents crash)
+                // ✅ Safe parsing
                 if (!int.TryParse(form["udf1"], out var corporationId))
                     return BadRequest("Invalid corporationId");
 
@@ -254,12 +256,8 @@ namespace Gba.TradeLicense.Api.Controllers
 
                 var txnid = form["txnid"].ToString();
                 var status = form["status"].ToString();
-
-                // 🔐 CRITICAL: Verify payment response (prevents fake success)
-                if (!IsValidPaymentResponse(form))
-                {
-                    return BadRequest("Tampered payment response");
-                }
+                var email = form["email"].ToString();
+                var phone = form["phone"].ToString();
 
                 using var con = new SqlConnection(_connectionString);
 
@@ -288,47 +286,77 @@ namespace Gba.TradeLicense.Api.Controllers
                         commandType: CommandType.StoredProcedure);
                 }
 
-                // 🔐 Secure redirect (same logic, encoded values)
+                // 🔐 STEP 1: Create payload
+                var payload = new
+                {
+                    txnid,
+                    amount,
+                    applicationId,
+                    email,
+                    phone,
+                    corporationId,
+                    status
+                };
+
+                var json = JsonConvert.SerializeObject(payload);
+
+                // 🔐 STEP 2: AES Generate
+                using var aes = Aes.Create();
+                aes.GenerateKey();
+                aes.GenerateIV();
+
+                // 🔐 STEP 3: Encrypt data using helper
+                var encryptedData = CryptoHelper.EncryptAES(json, aes.Key, aes.IV);
+
+                // 🔐 STEP 4: Get public key from file
+                var basePath = Directory.GetCurrentDirectory();
+                var publicKey = CryptoHelper.GetPublicKey();
+
+                // 🔐 STEP 5: Encrypt AES key using RSA
+                var encryptedKey = CryptoHelper.EncryptRSA(aes.Key, publicKey);
+
+                var iv = Convert.ToBase64String(aes.IV);
+
+                // 🔐 FINAL REDIRECT (encrypted only)
                 return Redirect(
                     $"https://pickitover.com/gba/trader/payment-success" +
-                    $"?txnid={Uri.EscapeDataString(txnid)}" +
-                    $"&amount={amount}" +
-                    $"&applicationNo={applicationId}"
+                    $"?data={Uri.EscapeDataString(encryptedData)}" +
+                    $"&key={Uri.EscapeDataString(encryptedKey)}" +
+                    $"&iv={Uri.EscapeDataString(iv)}"
                 );
-            }
-            catch (Exception ex)
-            {
-                // 🔐 Do NOT expose internal error
-                return StatusCode(500, "Internal server error");
-            }
-        }
-        private bool IsValidPaymentResponse(IFormCollection form)
-        {
-            try
-            {
-                var receivedHash = form["hash"].ToString();
-
-                // ⚠️ Replace with your actual gateway credentials
-                var key = "YOUR_KEY";
-                var salt = "YOUR_SALT";
-
-                var txnid = form["txnid"].ToString();
-                var amount = form["amount"].ToString();
-                var status = form["status"].ToString();
-
-                // Example (PayU style – update if using different gateway)
-                var hashString = $"{salt}|{status}|||||||||||{txnid}|{amount}|{key}";
-
-                using var sha512 = System.Security.Cryptography.SHA512.Create();
-                var hashBytes = sha512.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashString));
-                var calculatedHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-
-                return calculatedHash == receivedHash;
             }
             catch
             {
-                return false;
+                return StatusCode(500, "Internal server error");
             }
         }
+        [HttpGet("decrypt-payment")]
+        public IActionResult DecryptPayment(string data, string key, string iv)
+        {
+            try
+            {
+                var basePath = Directory.GetCurrentDirectory();
+
+                // 🔐 Get private key
+                var privateKey = CryptoHelper.GetPrivateKey();
+
+                // 🔓 Decrypt AES key
+                var aesKey = CryptoHelper.DecryptRSA(key, privateKey);
+
+                // 🔓 Decrypt data
+                var decryptedJson = CryptoHelper.DecryptAES(
+                    data,
+                    aesKey,
+                    Convert.FromBase64String(iv)
+                );
+
+                return Ok(decryptedJson);
+            }
+            catch
+            {
+                return BadRequest("Decryption failed");
+            }
+        }
+
     }
 }
