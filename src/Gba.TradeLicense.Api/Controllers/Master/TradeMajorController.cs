@@ -18,11 +18,14 @@ public class TradeMajorController : ControllerBase
     private IDbConnection Db()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
-    // GET ALL
+    /* =========================================
+       GET ALL
+    ========================================= */
     [HttpGet]
     public async Task<IActionResult> Get()
     {
         using var db = Db();
+
         var data = await db.QueryAsync<TradeMajorDto>(
             "usp_TradeMajor_CRUD",
             new { Action = "GET" },
@@ -31,55 +34,68 @@ public class TradeMajorController : ControllerBase
         return Ok(data);
     }
 
-    // INSERT
+    /* =========================================
+       INSERT
+       tradeMajorCode will be auto-generated
+    ========================================= */
     [HttpPost]
-    public async Task<IActionResult> Insert(TradeMajorDto dto)
+    public async Task<IActionResult> Insert([FromBody] TradeMajorDto dto)
     {
         using var db = Db();
-        var id = await db.ExecuteScalarAsync<int>(
+
+        var result = await db.QueryFirstAsync<dynamic>(
             "usp_TradeMajor_CRUD",
             new
             {
                 Action = "INSERT",
-                dto.TradeMajorCode,
-                dto.TradeMajorName,
-                dto.TradeMajorNativeName
+                tradeMajorName = dto.TradeMajorName,
+                tradeMajorNativeName = dto.TradeMajorNativeName
             },
             commandType: CommandType.StoredProcedure);
 
-        return Ok(new { Success = true, ID = id });
+        return Ok(result);
     }
 
-    // UPDATE
+    /* =========================================
+       UPDATE
+       tradeMajorCode not editable
+    ========================================= */
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, TradeMajorDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] TradeMajorDto dto)
     {
         using var db = Db();
-        await db.ExecuteAsync(
+
+        var result = await db.QueryFirstAsync<dynamic>(
             "usp_TradeMajor_CRUD",
             new
             {
                 Action = "UPDATE",
                 tradeMajorID = id,
-                dto.TradeMajorCode,
-                dto.TradeMajorName,
-                dto.TradeMajorNativeName
+                tradeMajorName = dto.TradeMajorName,
+                tradeMajorNativeName = dto.TradeMajorNativeName
             },
             commandType: CommandType.StoredProcedure);
 
-        return Ok(new { Success = true });
+        return Ok(result);
     }
 
-    // DELETE
+    /* =========================================
+       DELETE (SOFT DELETE)
+    ========================================= */
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         using var db = Db();
-        await db.ExecuteAsync(
+
+        var result = await db.QueryFirstAsync<dynamic>(
             "usp_TradeMajor_CRUD",
-            new { Action = "DELETE", tradeMajorID = id },
+            new
+            {
+                Action = "DELETE",
+                tradeMajorID = id
+            },
             commandType: CommandType.StoredProcedure);
 
-        return Ok(new { Success = true });
+        return Ok(result);
     }
 }

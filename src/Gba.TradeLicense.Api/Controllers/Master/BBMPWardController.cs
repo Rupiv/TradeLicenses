@@ -35,10 +35,12 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
             return Ok(data);
         }
+
+        // ================= GET BY CONSTITUENCY =================
         [HttpGet("by-constituency/{constituencyId:int}")]
         public async Task<IActionResult> GetWardsByConstituency(
-    int constituencyId,
-    CancellationToken ct)
+            int constituencyId,
+            CancellationToken ct)
         {
             using var db = CreateConnection();
 
@@ -72,7 +74,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             );
 
             if (data == null)
-                return NotFound("Ward not found");
+                return NotFound(new { message = "Ward not found" });
 
             return Ok(data);
         }
@@ -81,66 +83,99 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         [HttpPost]
         public async Task<IActionResult> Insert([FromBody] BBMPWardModel model, CancellationToken ct)
         {
-            using var db = CreateConnection();
+            try
+            {
+                using var db = CreateConnection();
 
-            var result = await db.QuerySingleAsync<string>(
-                "sp_Master_BBMPWard_CRUD",
-                new
+                var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                    "sp_Master_BBMPWard_CRUD",
+                    new
+                    {
+                        Action = "INSERT",
+                        model.wardCode,
+                        model.wardName,
+                        model.wardNativeName,
+                        model.zoneID,
+                        model.constituencyID
+                    },
+                    commandType: CommandType.StoredProcedure
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
                 {
-                    Action = "INSERT",
-                    model.wardCode,
-                    model.wardName,
-                    model.wardNativeName,
-                    model.zoneID,
-                    model.constituencyID
-                },
-                commandType: CommandType.StoredProcedure
-            );
-
-            return Ok(result);
+                    message = "Insert failed",
+                    detail = ex.Message
+                });
+            }
         }
 
         // ================= UPDATE =================
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] BBMPWardModel model, CancellationToken ct)
         {
-            using var db = CreateConnection();
+            try
+            {
+                using var db = CreateConnection();
 
-            var result = await db.QuerySingleAsync<string>(
-                "sp_Master_BBMPWard_CRUD",
-                new
+                var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                    "sp_Master_BBMPWard_CRUD",
+                    new
+                    {
+                        Action = "UPDATE",
+                        model.wardID,
+                        model.wardCode,
+                        model.wardName,
+                        model.wardNativeName,
+                        model.zoneID,
+                        model.constituencyID
+                    },
+                    commandType: CommandType.StoredProcedure
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
                 {
-                    Action = "UPDATE",
-                    model.wardID,
-                    model.wardCode,
-                    model.wardName,
-                    model.wardNativeName,
-                    model.zoneID,
-                    model.constituencyID
-                },
-                commandType: CommandType.StoredProcedure
-            );
-
-            return Ok(result);
+                    message = "Update failed",
+                    detail = ex.Message
+                });
+            }
         }
 
         // ================= DELETE =================
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
-            using var db = CreateConnection();
+            try
+            {
+                using var db = CreateConnection();
 
-            var result = await db.QuerySingleAsync<string>(
-                "sp_Master_BBMPWard_CRUD",
-                new
+                var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                    "sp_Master_BBMPWard_CRUD",
+                    new
+                    {
+                        Action = "DELETE",
+                        wardID = id
+                    },
+                    commandType: CommandType.StoredProcedure
+                );
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
                 {
-                    Action = "DELETE",
-                    wardID = id
-                },
-                commandType: CommandType.StoredProcedure
-            );
-
-            return Ok(result);
+                    message = "Delete failed",
+                    detail = ex.Message
+                });
+            }
         }
     }
 }

@@ -15,16 +15,18 @@ public class TradeMinorController : ControllerBase
         _config = config;
     }
 
-    private IDbConnection Db() =>
-        new SqlConnection(_config.GetConnectionString("Default"));
+    private IDbConnection Db()
+        => new SqlConnection(_config.GetConnectionString("Default"));
 
-    // 🔹 GET ALL (optional – admin screens)
+    //---------------------------------------------
+    // GET ALL
+    //---------------------------------------------
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         using var db = Db();
 
-        var data = await db.QueryAsync(
+        var data = await db.QueryAsync<TradeMinorDto>(
             "usp_TradeMinor_CRUD",
             new { Action = "GET" },
             commandType: CommandType.StoredProcedure
@@ -33,13 +35,15 @@ public class TradeMinorController : ControllerBase
         return Ok(data);
     }
 
-    // 🔹 GET BY MAJOR (for cascading dropdown)
+    //---------------------------------------------
+    // GET BY MAJOR (dropdown cascading)
+    //---------------------------------------------
     [HttpGet("by-major/{tradeMajorID}")]
     public async Task<IActionResult> GetByMajor(int tradeMajorID)
     {
         using var db = Db();
 
-        var data = await db.QueryAsync(
+        var data = await db.QueryAsync<TradeMinorDto>(
             "usp_TradeMinor_CRUD",
             new
             {
@@ -52,57 +56,83 @@ public class TradeMinorController : ControllerBase
         return Ok(data);
     }
 
-    // 🔹 INSERT
+    //---------------------------------------------
+    // INSERT
+    //---------------------------------------------
     [HttpPost]
     public async Task<IActionResult> Insert([FromBody] TradeMinorDto dto)
     {
-        using var db = Db();
+        try
+        {
+            using var db = Db();
 
-        var id = await db.ExecuteScalarAsync<int>(
-            "usp_TradeMinor_CRUD",
-            new
+            var result = await db.QueryFirstAsync<dynamic>(
+                "usp_TradeMinor_CRUD",
+                new
+                {
+                    Action = "INSERT",
+                    tradeMajorID = dto.TradeMajorID,
+                    tradeMinorName = dto.TradeMinorName,
+                    tradeMinorNativeName = dto.TradeMinorNativeName
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(result);
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(new
             {
-                Action = "INSERT",
-                dto.TradeMinorID,
-                dto.TradeMinorCode,
-                dto.TradeMinorName,
-                dto.TradeMinorNativeName
-            },
-            commandType: CommandType.StoredProcedure
-        );
-
-        return Ok(new { Success = true, NewID = id });
+                success = false,
+                error = ex.Message
+            });
+        }
     }
 
-    // 🔹 UPDATE
+    //---------------------------------------------
+    // UPDATE
+    //---------------------------------------------
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] TradeMinorDto dto)
     {
-        using var db = Db();
+        try
+        {
+            using var db = Db();
 
-        await db.ExecuteAsync(
-            "usp_TradeMinor_CRUD",
-            new
+            var result = await db.QueryFirstAsync<dynamic>(
+                "usp_TradeMinor_CRUD",
+                new
+                {
+                    Action = "UPDATE",
+                    tradeMinorID = id,
+                    tradeMinorName = dto.TradeMinorName,
+                    tradeMinorNativeName = dto.TradeMinorNativeName
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(result);
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(new
             {
-                Action = "UPDATE",
-                tradeMinorID = id,
-                dto.TradeMinorCode,
-                dto.TradeMinorName,
-                dto.TradeMinorNativeName
-            },
-            commandType: CommandType.StoredProcedure
-        );
-
-        return Ok(new { Success = true });
+                success = false,
+                error = ex.Message
+            });
+        }
     }
 
-    // 🔹 DELETE (SOFT)
+    //---------------------------------------------
+    // DELETE
+    //---------------------------------------------
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         using var db = Db();
 
-        await db.ExecuteAsync(
+        var result = await db.QueryFirstAsync<dynamic>(
             "usp_TradeMinor_CRUD",
             new
             {
@@ -112,6 +142,6 @@ public class TradeMinorController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        return Ok(new { Success = true });
+        return Ok(result);
     }
 }

@@ -1,8 +1,10 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
+using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Gba.TradeLicense.Domain.Entities;
+using System.Data;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Gba.TradeLicense.Api.Controllers.Approver
 {
@@ -26,27 +28,35 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         // ======================================================
         // APPROVER – APPLICATION LIST (PAGED + SEARCH)
         // ======================================================
-        [HttpGet("applications")]
+        [HttpPost("applications")]
         public async Task<IActionResult> GetApplications(
-            int loginId,
-            int? mohId,
-            int? wardId,
-            int? licenceApplicationId,
-            string? applicationNumber,
-            int pageNumber = 1,
-            int pageSize = 10)
+    [FromBody] ApproverApplicationRequest request)
         {
+            // ✅ Step 1: Model validation
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // ✅ Step 2: Extra manual validation (defense in depth)
+            if (!string.IsNullOrEmpty(request.ApplicationNumber) &&
+                !Regex.IsMatch(request.ApplicationNumber, @"^[a-zA-Z0-9\-\/]+$"))
+            {
+                return BadRequest("Invalid Application Number");
+            }
+
             using var con = Db();
 
             var parameters = new DynamicParameters();
             parameters.Add("@Action", "LIST");
-            parameters.Add("@LoginID", loginId);
-            parameters.Add("@MohID", mohId);
-            parameters.Add("@WardID", wardId);
-            parameters.Add("@LicenceApplicationID", licenceApplicationId);
-            parameters.Add("@ApplicationNumber", applicationNumber);
-            parameters.Add("@PageNumber", pageNumber);
-            parameters.Add("@PageSize", pageSize);
+            parameters.Add("@LoginID", request.LoginId);
+            parameters.Add("@MohID", request.MohId);
+            parameters.Add("@WardID", request.WardId);
+            parameters.Add("@LicenceApplicationID", request.LicenceApplicationId);
+            parameters.Add("@ApplicationNumber", request.ApplicationNumber);
+            parameters.Add("@PageNumber", request.PageNumber);
+            parameters.Add("@PageSize", request.PageSize);
+
             parameters.Add("@TotalCount",
                 dbType: DbType.Int32,
                 direction: ParameterDirection.Output);
@@ -60,15 +70,21 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
 
             var totalCount = parameters.Get<int>("@TotalCount");
 
+            // ✅ Step 3: Encode output (VERY IMPORTANT for XSS)
+            var safeData = applications.Select(x =>
+            {
+                x.ApplicationNumber = WebUtility.HtmlEncode(x.ApplicationNumber);
+                return x;
+            });
+
             return Ok(new
             {
                 Role = "Approver",
                 Mode = "LIST",
-                LoginID = loginId,
                 TotalRecords = totalCount,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
-                Data = applications
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                Data = safeData
             });
         }
 

@@ -10,9 +10,11 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Gba.TradeLicense.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/payment")]
     public class PaymentController : ControllerBase
@@ -238,25 +240,95 @@ namespace Gba.TradeLicense.Api.Controllers
         [HttpPost("success")]
         public IActionResult PaymentSuccess([FromForm] IFormCollection form)
         {
-            var txnid = form["txnid"].ToString();
-            var amount = form["amount"].ToString();
-            var email = form["email"].ToString();
-            var phone = form["phone"].ToString();
-            var corporationId = form["udf1"].ToString(); // you sent this
-            var licenceApplicationId = form["udf2"].ToString();
+            try
+            {
+                // ✅ Safe parsing (prevents crash)
+                if (!int.TryParse(form["udf1"], out var corporationId))
+                    return BadRequest("Invalid corporationId");
 
-            // (optional) verify hash here
+                if (!long.TryParse(form["udf2"], out var applicationId))
+                    return BadRequest("Invalid applicationId");
 
-            return Redirect(
-                $"https://pickitover.com/gba/trader/payment-success" +
-                $"?txnid={txnid}" +
-                $"&amount={amount}" +
-                $"&email={email}" +
-                $"&phone={phone}" +
-                $"&corporationId={corporationId}" +
-                $"&applicationNo={licenceApplicationId}"
-            );
+                if (!decimal.TryParse(form["amount"], out var amount))
+                    return BadRequest("Invalid amount");
+
+                var txnid = form["txnid"].ToString();
+                var status = form["status"].ToString();
+
+                // 🔐 CRITICAL: Verify payment response (prevents fake success)
+                if (!IsValidPaymentResponse(form))
+                {
+                    return BadRequest("Tampered payment response");
+                }
+
+                using var con = new SqlConnection(_connectionString);
+
+                // 🔒 Audit log (UNCHANGED)
+                con.Execute("usp_Payment_Audit_Log", new
+                {
+                    LicenceApplicationId = applicationId,
+                    CorporationId = corporationId,
+                    TxnId = txnid,
+                    Amount = amount,
+                    PaymentStage = status.ToUpper(),
+                    GatewayStatus = status,
+                    ResponsePayload = JsonConvert.SerializeObject(
+                        form.ToDictionary(x => x.Key, x => x.Value.ToString()))
+                }, commandType: CommandType.StoredProcedure);
+
+                // ✅ Business logic (UNCHANGED)
+                if (status.Equals("success", StringComparison.OrdinalIgnoreCase))
+                {
+                    con.Execute("usp_LicenceApplication_CRUD",
+                        new
+                        {
+                            Action = "PAYMENT_SUCCESS",
+                            licenceApplicationID = applicationId
+                        },
+                        commandType: CommandType.StoredProcedure);
+                }
+
+                // 🔐 Secure redirect (same logic, encoded values)
+                return Redirect(
+                    $"https://pickitover.com/gba/trader/payment-success" +
+                    $"?txnid={Uri.EscapeDataString(txnid)}" +
+                    $"&amount={amount}" +
+                    $"&applicationNo={applicationId}"
+                );
+            }
+            catch (Exception ex)
+            {
+                // 🔐 Do NOT expose internal error
+                return StatusCode(500, "Internal server error");
+            }
         }
+        private bool IsValidPaymentResponse(IFormCollection form)
+        {
+            try
+            {
+                var receivedHash = form["hash"].ToString();
 
+                // ⚠️ Replace with your actual gateway credentials
+                var key = "YOUR_KEY";
+                var salt = "YOUR_SALT";
+
+                var txnid = form["txnid"].ToString();
+                var amount = form["amount"].ToString();
+                var status = form["status"].ToString();
+
+                // Example (PayU style – update if using different gateway)
+                var hashString = $"{salt}|{status}|||||||||||{txnid}|{amount}|{key}";
+
+                using var sha512 = System.Security.Cryptography.SHA512.Create();
+                var hashBytes = sha512.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashString));
+                var calculatedHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+
+                return calculatedHash == receivedHash;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

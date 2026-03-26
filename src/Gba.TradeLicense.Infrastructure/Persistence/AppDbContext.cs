@@ -1,3 +1,4 @@
+using Gba.TradeLicense.Application.Models;
 using Gba.TradeLicense.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,9 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
+
+
+    public DbSet<GeneratedLicenceCertificate> GeneratedLicenceCertificate  =>Set<GeneratedLicenceCertificate>();
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();

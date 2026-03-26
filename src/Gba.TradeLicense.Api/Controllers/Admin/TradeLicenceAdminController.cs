@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using Dapper;
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace TradeLicence.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/trade-licence/admin")]
     public class TradeLicenceAdminController : ControllerBase

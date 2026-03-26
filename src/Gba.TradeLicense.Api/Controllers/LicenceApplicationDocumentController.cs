@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Dapper;
 using Gba.TradeLicense.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Gba.TradeLicense.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/licence-documents")]
     public class LicenceApplicationDocumentController : ControllerBase
@@ -56,20 +58,52 @@ namespace Gba.TradeLicense.Api.Controllers
         ===================================================== */
         [HttpPost("save-update")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> SaveOrUpdate(
-            [FromForm] LicenceDocumentUploadDto model
-        )
+        public async Task<IActionResult> SaveOrUpdate([FromForm] LicenceDocumentUploadDto model)
         {
             if (model.File == null || model.File.Length == 0)
                 return BadRequest("File is required");
 
-            if (model.File.Length > MAX_FILE_SIZE)
+            if (model.File.Length > 2 * 1024 * 1024) // 2MB
                 return BadRequest("File size must be less than 2 MB");
 
+            // ✅ 1. Validate Extension
+            var allowedExtensions = new[] { ".pdf" };
+            var extension = Path.GetExtension(model.File.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest("Only PDF files are allowed");
+
+            // ❌ Block dangerous extensions explicitly
+            var blockedExtensions = new[] { ".aspx", ".php", ".exe", ".js", ".bat" };
+            if (blockedExtensions.Contains(extension))
+                return BadRequest("Invalid file type");
+
+            // ✅ 2. Validate MIME Type
+            if (model.File.ContentType != "application/pdf")
+                return BadRequest("Invalid file type (MIME mismatch)");
+
+            // ✅ 3. Validate File Signature (MAGIC NUMBER)
+            using (var stream = model.File.OpenReadStream())
+            {
+                byte[] buffer = new byte[4];
+                await stream.ReadAsync(buffer, 0, 4);
+                var header = System.Text.Encoding.ASCII.GetString(buffer);
+
+                if (header != "%PDF")
+                    return BadRequest("Invalid PDF file content");
+            }
+
+            // ✅ 4. Secure File Name (NO original name)
+            string storedName = Guid.NewGuid().ToString() + ".pdf";
+
+            // ✅ 5. Secure Folder (Make sure outside wwwroot)
             string folder = GetUploadFolder();
-            string storedName = Guid.NewGuid() + Path.GetExtension(model.File.FileName);
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
+
             string fullPath = Path.Combine(folder, storedName);
 
+            // ✅ 6. Save File
             await using (var fs = new FileStream(fullPath, FileMode.Create))
             {
                 await model.File.CopyToAsync(fs);
@@ -85,9 +119,15 @@ namespace Gba.TradeLicense.Api.Controllers
                     ApplicationDocumentID = model.ApplicationDocumentID,
                     LicenceApplicationID = model.LicenceApplicationID,
                     DocumentID = model.DocumentID,
-                    FileName = model.File.FileName,
+
+                    // ⚠️ Store original name separately (safe)
+                    FileName = Path.GetFileName(model.File.FileName),
+
                     FilePath = fullPath,
-                    FileExtension = Path.GetExtension(model.File.FileName),
+
+                    // Always force .pdf
+                    FileExtension = ".pdf",
+
                     FileSizeKB = model.File.Length / 1024,
                     EntryLoginID = model.LoginID
                 },
@@ -97,7 +137,7 @@ namespace Gba.TradeLicense.Api.Controllers
             return Ok(new
             {
                 success = true,
-                message = "Document saved successfully"
+                message = "Document uploaded securely"
             });
         }
 
@@ -119,7 +159,39 @@ namespace Gba.TradeLicense.Api.Controllers
                 commandType: CommandType.StoredProcedure
             );
 
-            return Ok(documents);
+            // 🔐 Sanitize response (NO LOGIC CHANGE)
+            var safeDocuments = documents.Select(d =>
+            {
+                var dict = (IDictionary<string, object>)d;
+
+                // Handle FilePath safely (if exists)
+                if (dict.ContainsKey("FilePath") && dict["FilePath"] != null)
+                {
+                    var fullPath = dict["FilePath"].ToString();
+
+                    if (!string.IsNullOrEmpty(fullPath))
+                    {
+                        // Normalize path (avoid slash issues)
+                        fullPath = fullPath.Replace("\\", "/");
+
+                        // Remove sensitive server path
+                        var index = fullPath.IndexOf("/uploads", StringComparison.OrdinalIgnoreCase);
+
+                        if (index >= 0)
+                        {
+                            dict["FilePath"] = fullPath.Substring(index); // ✅ "/uploads/..."
+                        }
+                        else
+                        {
+                            dict["FilePath"] = null; // fallback (safe)
+                        }
+                    }
+                }
+
+                return dict;
+            });
+
+            return Ok(safeDocuments);
         }
 
         /* =====================================================

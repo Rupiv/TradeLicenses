@@ -1,58 +1,70 @@
-﻿using System;
-using System.Net.Http.Headers;
-using System.Text;
-using Gba.TradeLicense.Application.Abstractions;
+﻿using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Persistence;
 using Gba.TradeLicense.Infrastructure.Security;
 using Gba.TradeLicense.Infrastructure.Services;
 using Gba.TradeLicense.Infrastructure.Sms;
 using Gba.TradeLicense.Infrastructure.Sms.esms_client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Net.Http.Headers;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --------------------------------------------------
-// CORS (SINGLE POLICY)
+// CORS
 // --------------------------------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AngularPolicy", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "https://pickitover.com"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
 // --------------------------------------------------
-// SERVICES
+// CONTROLLERS (🔥 GLOBAL AUTH ENABLED)
 // --------------------------------------------------
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add(new AuthorizeFilter()); // 🔥 ALL APIs PROTECTED
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
-// Database
+// --------------------------------------------------
+// DB
+// --------------------------------------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
 });
 
-// HttpClient (KGIS)
+// --------------------------------------------------
+// HTTP CLIENT
+// --------------------------------------------------
 builder.Services.AddHttpClient("KgisClient", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/json"));
-    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
 });
 
-// Application Services
+// --------------------------------------------------
+// SERVICES
+// --------------------------------------------------
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
@@ -67,46 +79,60 @@ builder.Services.AddMemoryCache();
 // JWT AUTHENTICATION
 // --------------------------------------------------
 var jwtSection = builder.Configuration.GetSection("Jwt");
-var issuer = jwtSection["Issuer"];
-var audience = jwtSection["Audience"];
-var key = jwtSection["Key"]
-          ?? throw new InvalidOperationException("Jwt:Key is missing");
+var key = jwtSection["Key"] ?? throw new Exception("JWT Key missing");
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
-
-            ValidateAudience = true,
-            ValidAudience = audience,
-
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(key)
-            ),
-
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30)
-        };
-    });
-
-// Authorization Policies
-builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
 {
-    options.AddPolicy("TraderOnly", p => p.RequireRole("Trader"));
-    options.AddPolicy("ApproverOnly", p => p.RequireRole("Approver"));
-    options.AddPolicy("SeniorApproverOnly", p => p.RequireRole("SeniorApprover"));
-    options.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
-    options.AddPolicy("ApproverOrSenior", p =>
-        p.RequireRole("Approver", "SeniorApprover"));
+    options.RequireHttpsMetadata = true;
+    options.SaveToken = true;
+
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtSection["Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = jwtSection["Audience"],
+
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(key)),
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+            {
+                context.Response.Headers.Add("Token-Expired", "true");
+            }
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+
+            return context.Response.WriteAsync(
+                "{\"error\":\"Unauthorized or Session expired\"}");
+        }
+    };
 });
 
 // --------------------------------------------------
-// SWAGGER
+// AUTHORIZATION
+// --------------------------------------------------
+builder.Services.AddAuthorization();
+
+// --------------------------------------------------
+// 🔐 SWAGGER WITH JWT SUPPORT (FIXED)
 // --------------------------------------------------
 builder.Services.AddSwaggerGen(c =>
 {
@@ -116,6 +142,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1"
     });
 
+    // 🔐 JWT AUTH IN SWAGGER
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -123,7 +150,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter token as: Bearer {your JWT token}"
+        Description = "Enter: Bearer {your token}"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -137,50 +164,90 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+            new string[] {}
         }
     });
 });
 
 // --------------------------------------------------
-// APP PIPELINE
+// BUILD
 // --------------------------------------------------
 var app = builder.Build();
 
-// Swagger
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// --------------------------------------------------
+// GLOBAL ERROR HANDLING
+// --------------------------------------------------
+app.UseExceptionHandler("/error");
+
+// --------------------------------------------------
+// SECURITY HEADERS
+// --------------------------------------------------
+app.Use(async (context, next) =>
 {
-    c.SwaggerEndpoint("v1/swagger.json", "GBA Trade License API v1");
-    c.DisplayRequestDuration();
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+
+        headers["X-XSS-Protection"] = "1; mode=block";
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "SAMEORIGIN";
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+
+        headers["Content-Security-Policy"] =
+            "default-src 'self' https: data: blob:;" +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;" +
+            "style-src 'self' 'unsafe-inline' https:;" +
+            "img-src 'self' data: https:;" +
+            "connect-src 'self' https:;" +
+            "font-src 'self' https: data:;" +
+            "frame-ancestors 'self';";
+
+        headers["Permissions-Policy"] =
+            "geolocation=(), microphone=(), camera=()";
+
+        return Task.CompletedTask;
+    });
+
+    await next();
 });
 
-// HTTPS (ONLY ONCE)
+// --------------------------------------------------
+// HTTPS
+// --------------------------------------------------
+app.UseHsts();
 app.UseHttpsRedirection();
 
-// Routing
+// --------------------------------------------------
+// SWAGGER (🔥 ENABLE IN ALL ENV)
+// --------------------------------------------------
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// --------------------------------------------------
+// PIPELINE
+// --------------------------------------------------
 app.UseRouting();
+app.UseCors("CorsPolicy");
 
-// CORS (MUST be before auth)
-app.UseCors("AngularPolicy");
-
-// Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Audit / performance logging
+// --------------------------------------------------
+// LOGGING
+// --------------------------------------------------
 app.Use(async (context, next) =>
 {
     var sw = System.Diagnostics.Stopwatch.StartNew();
     await next();
     sw.Stop();
 
-    Console.WriteLine(
-        $"{context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds} ms"
-    );
+    Console.WriteLine($"{context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds} ms");
 });
 
-// Controllers
+// --------------------------------------------------
+// ENDPOINTS
+// --------------------------------------------------
 app.MapControllers();
 
 app.Run();

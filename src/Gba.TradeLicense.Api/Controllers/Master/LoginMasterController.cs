@@ -42,7 +42,9 @@ public class LoginMasterController : ControllerBase
         return Ok(new { loginID = id });
     }
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+     int pageNumber = 1,
+     int pageSize = 10)
     {
         using var db = Db();
 
@@ -50,21 +52,26 @@ public class LoginMasterController : ControllerBase
             "usp_LoginMaster_CRUD",
             new
             {
-                Action = "GETALLUSERD"
+                Action = "GETALL",
+                PageNumber = pageNumber,
+                PageSize = pageSize
             },
             commandType: CommandType.StoredProcedure
         );
 
-        // 1️⃣ Office Details
-        var offices = (await multi.ReadAsync()).ToList();
+        // 1️⃣ Total Records
+        var totalRecords = await multi.ReadFirstAsync<int>();
 
-        // 2️⃣ Designations
-        var designations = (await multi.ReadAsync()).ToList();
+        // 2️⃣ Paged Data
+        var users = (await multi.ReadAsync()).ToList();
 
         return Ok(new
         {
-            offices,
-            designations
+            pageNumber,
+            pageSize,
+            totalRecords,
+            totalPages = (int)Math.Ceiling((double)totalRecords / pageSize),
+            data = users
         });
     }
 

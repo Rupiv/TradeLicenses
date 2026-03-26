@@ -15,16 +15,18 @@ public class TradeSubController : ControllerBase
         _config = config;
     }
 
-    private IDbConnection Db() =>
-        new SqlConnection(_config.GetConnectionString("Default"));
+    private IDbConnection Db()
+        => new SqlConnection(_config.GetConnectionString("Default"));
 
-    // 🔹 GET BY MINOR (for cascading dropdown)
+    //-----------------------------------------
+    // GET BY MINOR
+    //-----------------------------------------
     [HttpGet("by-minor/{tradeMinorID}")]
     public async Task<IActionResult> GetByMinor(int tradeMinorID)
     {
         using var db = Db();
 
-        var data = await db.QueryAsync(
+        var data = await db.QueryAsync<TradeSubDto>(
             "usp_TradeSub_CRUD",
             new
             {
@@ -37,59 +39,85 @@ public class TradeSubController : ControllerBase
         return Ok(data);
     }
 
-    // 🔹 INSERT
+    //-----------------------------------------
+    // INSERT
+    //-----------------------------------------
     [HttpPost]
     public async Task<IActionResult> Insert([FromBody] TradeSubDto dto)
     {
-        using var db = Db();
+        try
+        {
+            using var db = Db();
 
-        var id = await db.ExecuteScalarAsync<int>(
-            "usp_TradeSub_CRUD",
-            new
+            var result = await db.QueryFirstAsync<dynamic>(
+                "usp_TradeSub_CRUD",
+                new
+                {
+                    Action = "INSERT",
+                    tradeMinorID = dto.TradeMinorID,
+                    tradeSubName = dto.TradeSubName,
+                    tradeSubNativeName = dto.TradeSubNativeName,
+                    blockPeriodID = dto.BlockPeriodID
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(result);
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(new
             {
-                Action = "INSERT",
-                dto.TradeSubID,
-                dto.TradeSubCode,
-                dto.TradeSubName,
-                dto.TradeSubNativeName,
-                dto.BlockPeriodID
-            },
-            commandType: CommandType.StoredProcedure
-        );
-
-        return Ok(new { Success = true, NewID = id });
+                success = false,
+                error = ex.Message
+            });
+        }
     }
 
-    // 🔹 UPDATE
+    //-----------------------------------------
+    // UPDATE
+    //-----------------------------------------
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] TradeSubDto dto)
     {
-        using var db = Db();
+        try
+        {
+            using var db = Db();
 
-        await db.ExecuteAsync(
-            "usp_TradeSub_CRUD",
-            new
+            var result = await db.QueryFirstAsync<dynamic>(
+                "usp_TradeSub_CRUD",
+                new
+                {
+                    Action = "UPDATE",
+                    tradeSubID = id,
+                    tradeSubName = dto.TradeSubName,
+                    tradeSubNativeName = dto.TradeSubNativeName,
+                    blockPeriodID = dto.BlockPeriodID
+                },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return Ok(result);
+        }
+        catch (SqlException ex)
+        {
+            return BadRequest(new
             {
-                Action = "UPDATE",
-                tradeSubID = id,
-                dto.TradeSubCode,
-                dto.TradeSubName,
-                dto.TradeSubNativeName,
-                dto.BlockPeriodID
-            },
-            commandType: CommandType.StoredProcedure
-        );
-
-        return Ok(new { Success = true });
+                success = false,
+                error = ex.Message
+            });
+        }
     }
 
-    // 🔹 DELETE (SOFT)
+    //-----------------------------------------
+    // DELETE
+    //-----------------------------------------
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         using var db = Db();
 
-        await db.ExecuteAsync(
+        var result = await db.QueryFirstAsync<dynamic>(
             "usp_TradeSub_CRUD",
             new
             {
@@ -99,6 +127,6 @@ public class TradeSubController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        return Ok(new { Success = true });
+        return Ok(result);
     }
 }

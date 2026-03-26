@@ -1,9 +1,11 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
 using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Data;
+using System.Net;
+using System.Text.RegularExpressions;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
@@ -34,8 +36,23 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         [HttpPost("submit-action")]
         public async Task<IActionResult> SubmitAction([FromBody] LicenceActionRequest request)
         {
+            // ✅ Step 1: Null check
             if (request == null)
                 return BadRequest("Invalid request.");
+
+            // ✅ Step 2: Model validation
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // ✅ Step 3: Extra manual validation (defense-in-depth)
+            if (!string.IsNullOrEmpty(request.Remarks) &&
+                !Regex.IsMatch(request.Remarks, @"^[a-zA-Z0-9\s\-\.,()]+$"))
+            {
+                return BadRequest("Invalid Remarks");
+            }
+
+            // 🚨 Strip any HTML tags (extra protection)
+            request.Remarks = Regex.Replace(request.Remarks ?? "", "<.*?>", "");
 
             using var db = Db();
 
@@ -53,6 +70,16 @@ namespace Gba.TradeLicense.Api.Controllers.Master
                 },
                 commandType: CommandType.StoredProcedure
             );
+
+            // ✅ Step 4: Encode output (XSS protection)
+            if (result != null)
+            {
+                if (result.Remarks != null)
+                    result.Remarks = WebUtility.HtmlEncode(result.Remarks);
+
+                if (result.Message != null)
+                    result.Message = WebUtility.HtmlEncode(result.Message);
+            }
 
             if (result != null && result.Success == 1)
                 return Ok(result);
