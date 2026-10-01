@@ -4,16 +4,20 @@ using Gba.TradeLicense.Application.Abstractions;
 using Gba.TradeLicense.Infrastructure.Sms.esms_client;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 public class SmsService : ISmsService
 {
     private readonly IConfiguration _config;
     private readonly SMSHttpPostClient _client;
     private readonly string _connStr;
+    private readonly ILogger<SmsService> _logger;
 
-    public SmsService(IConfiguration config)
+    public SmsService(IConfiguration config, ILogger<SmsService> logger)
     {
         _config = config;
+        _logger = logger;
         _client = new SMSHttpPostClient();
         _connStr = _config.GetConnectionString("Default");
     }
@@ -42,7 +46,18 @@ public class SmsService : ISmsService
             message = message.Replace("{" + i + "}", variables[i]);
         }
 
+        // DLT-style templates use {#var#} for every variable; fill them in order.
+        // The surrounding brace is matched loosely because copied templates sometimes carry
+        // non-ASCII braces (which show up as "?#var#?" on the handset).
+        int varIndex = 0;
+        message = Regex.Replace(message, @"\S#var#\S", m =>
+            varIndex < variables.Length ? (variables[varIndex++] ?? string.Empty) : m.Value);
+
         var smsCfg = _config.GetSection("Sms");
+
+        _logger.LogInformation(
+            "Sending SMS {TemplateKey}: SmsType={SmsType}, TemplateId={TemplateId}, Content=[{Content}]",
+            templateKey, (string)template.SmsType, (string)template.TemplateId, message);
 
         return template.SmsType switch
         {

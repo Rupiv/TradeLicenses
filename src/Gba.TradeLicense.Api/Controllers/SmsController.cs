@@ -14,11 +14,13 @@ namespace Gba.TradeLicense.Api.Controllers
     {
         private readonly ISmsService _sms;
         private readonly IConfiguration _config;
+        private readonly ILogger<SmsController> _logger;
 
-        public SmsController(ISmsService sms, IConfiguration config)
+        public SmsController(ISmsService sms, IConfiguration config, ILogger<SmsController> logger)
         {
             _sms = sms;
             _config = config;
+            _logger = logger;
         }
 
         private IDbConnection CreateConnection()
@@ -64,17 +66,31 @@ namespace Gba.TradeLicense.Api.Controllers
                 },
                 commandType: CommandType.StoredProcedure);
 
+            if (string.IsNullOrWhiteSpace(otp))
+                return StatusCode(500, new { Message = "OTP could not be generated" });
+
             string date = DateTime.Now.ToString("dd-MM-yyyy");
             string time = DateTime.Now.ToString("HH:mm");
 
-            await _sms.SendAsync(
+            // Order must match the DLT template:
+            // "OTP IS {#var#} at {#var#} on {#var#} for Trade License Registration. ... {#var#} City Corporation Trade License."
+            string gatewayResponse = await _sms.SendAsync(
                 "OTP_PAYMENT",
                 req.MobileNo,
                 otp,
+                time,
                 date,
-                time);
+                "BBMP");
 
-            return Ok(new { Message = "OTP sent successfully" });
+            _logger.LogInformation("SMS gateway response for {MobileNo}: {Response}",
+                req.MobileNo, gatewayResponse);
+
+            // Karnataka (CDAC MSDG) gateway returns "402,MsgID = ..." when the message is accepted;
+            // any other text is an error (credentials, sender ID, template, credits, ...).
+            if (gatewayResponse == null || !gatewayResponse.TrimStart().StartsWith("402"))
+                return StatusCode(502, new { Message = "Failed to send OTP", GatewayResponse = gatewayResponse });
+
+            return Ok(new { Message = "OTP sent successfully", GatewayResponse = gatewayResponse });
         }
 
         /* ==========================================================

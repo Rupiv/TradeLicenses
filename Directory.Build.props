@@ -1,0 +1,7 @@
+<Project>
+  <!-- Keep intermediate (obj) files outside the long OneDrive path so Visual Studio
+       does not exceed the Windows 260-character path limit. -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(LOCALAPPDATA)\TLBuild\$(MSBuildProjectName)\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>
