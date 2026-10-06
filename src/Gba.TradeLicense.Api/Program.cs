@@ -71,6 +71,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ITradeApplicationService, TradeApplicationService>();
 builder.Services.AddSingleton<KarnatakaSmsService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
+builder.Services.AddScoped<Gba.TradeLicense.Api.Services.ApplicationSmsNotifier>();
 builder.Services.AddScoped<SMSHttpPostClient>();
 builder.Services.AddSingleton<BbmpBoundaryService>();
 builder.Services.AddMemoryCache();
@@ -100,7 +101,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             Encoding.UTF8.GetBytes(key)),
 
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        RequireSignedTokens = true,
+        RequireExpirationTime = true
     };
 
     options.Events = new JwtBearerEvents
@@ -177,7 +180,17 @@ var app = builder.Build();
 // --------------------------------------------------
 // GLOBAL ERROR HANDLING
 // --------------------------------------------------
-app.UseExceptionHandler("/error");
+// Show the actual exception while debugging locally. The production
+// exception handler remains intentionally generic so no internal details
+// are exposed to callers.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/error");
+}
 
 // --------------------------------------------------
 // SECURITY HEADERS
@@ -206,6 +219,12 @@ app.Use(async (context, next) =>
         headers["Permissions-Policy"] =
             "geolocation=(), microphone=(), camera=()";
 
+        // No caching of API responses (same as live)
+        headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0";
+        headers["Pragma"] = "no-cache";
+        headers["Expires"] = "0";
+        headers["Surrogate-Control"] = "no-store";
+
         return Task.CompletedTask;
     });
 
@@ -222,7 +241,12 @@ app.UseHttpsRedirection();
 // SWAGGER (🔥 ENABLE IN ALL ENV)
 // --------------------------------------------------
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    // Relative path: works locally (/swagger) and on IIS under the /api application (/api/swagger)
+    c.SwaggerEndpoint("v1/swagger.json", "GBA Trade License API V1");
+    c.RoutePrefix = "swagger";
+});
 
 // --------------------------------------------------
 // PIPELINE

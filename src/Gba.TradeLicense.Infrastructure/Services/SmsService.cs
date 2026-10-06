@@ -36,7 +36,10 @@ public class SmsService : ISmsService
             new { templateKey });
 
         if (template == null)
+        {
+            await LogAsync(templateKey, null, null, mobileNo, variables, null, "FAILED", null, "SMS template not found");
             throw new Exception("SMS template not found");
+        }
 
         string message = template.TemplateText;
 
@@ -59,7 +62,85 @@ public class SmsService : ISmsService
             "Sending SMS {TemplateKey}: SmsType={SmsType}, TemplateId={TemplateId}, Content=[{Content}]",
             templateKey, (string)template.SmsType, (string)template.TemplateId, message);
 
-        return template.SmsType switch
+        string smsType = (string)template.SmsType;
+        string templateId = (string)template.TemplateId;
+        string response;
+
+        try
+        {
+            response = SendViaGateway(smsType, mobileNo, message, templateId, smsCfg);
+        }
+        catch (Exception ex)
+        {
+            await LogAsync(templateKey, templateId, smsType, mobileNo, variables, message, "FAILED", null, ex.Message);
+            throw;
+        }
+
+        // Karnataka (CDAC MSDG) gateway returns "402,MsgID = ..." when the message is accepted
+        bool accepted = response != null && response.TrimStart().StartsWith("402");
+        await LogAsync(templateKey, templateId, smsType, mobileNo, variables, message,
+            accepted ? "SENT" : "FAILED", response, accepted ? null : "Gateway did not accept the message");
+
+        return response;
+    }
+
+    /* ==========================================================
+       SMS LOG -> dbo.SMS_Message_Log (via usp_SMS_Message_Log)
+       Never throws: a logging problem must not stop the SMS flow.
+    ========================================================== */
+    private async Task LogAsync(
+        string templateKey, string? templateId, string? smsType, string mobileNo, string[] variables,
+        string? message, string status, string? gatewayResponse, string? error)
+    {
+        try
+        {
+            bool isOtp = smsType != null && smsType.Contains("OTP", StringComparison.OrdinalIgnoreCase)
+                         || templateKey.StartsWith("OTP", StringComparison.OrdinalIgnoreCase);
+
+            // Never store a usable OTP: mask the OTP value (first variable) in the logged text
+            string? loggedText = message;
+            if (isOtp && loggedText != null && variables.Length > 0 && !string.IsNullOrEmpty(variables[0]))
+                loggedText = loggedText.Replace(variables[0], new string('*', variables[0].Length));
+
+            // For application alerts the first variable is the Application Number
+            string? referenceNo = !isOtp && variables.Length > 0 ? variables[0] : null;
+
+            string? gatewayMsgId = null;
+            var m = Regex.Match(gatewayResponse ?? string.Empty, @"MsgID\s*=\s*(\S+)", RegexOptions.IgnoreCase);
+            if (m.Success) gatewayMsgId = m.Groups[1].Value;
+
+            using var db = new SqlConnection(_connStr);
+            await db.ExecuteAsync(
+                "usp_SMS_Message_Log",
+                new
+                {
+                    Action = "INSERT",
+                    TemplateKey = templateKey,
+                    TemplateId = templateId,
+                    SmsType = smsType,
+                    MobileNo = mobileNo,
+                    ReferenceNo = referenceNo,
+                    MessageText = Truncate(loggedText, 1000),
+                    Status = status,
+                    GatewayResponse = Truncate(gatewayResponse, 1000),
+                    GatewayMessageId = Truncate(gatewayMsgId, 100),
+                    ErrorMessage = Truncate(error, 1000)
+                },
+                commandType: System.Data.CommandType.StoredProcedure);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not write SMS log for {TemplateKey} to {MobileNo}", templateKey, mobileNo);
+        }
+    }
+
+    private static string? Truncate(string? value, int max)
+        => value == null || value.Length <= max ? value : value.Substring(0, max);
+
+    private string SendViaGateway(string smsType, string mobileNo, string message, string templateId,
+        IConfigurationSection smsCfg)
+    {
+        return smsType switch
         {
             "OTP" => _client.sendOTPMSG(
                         smsCfg["Username"],
@@ -68,7 +149,7 @@ public class SmsService : ISmsService
                         mobileNo,
                         message,
                         smsCfg["SecureKey"],
-                        template.TemplateId),
+                        templateId),
 
             "UNICODE" => _client.sendUnicodeSMS(
                         smsCfg["Username"],
@@ -77,7 +158,7 @@ public class SmsService : ISmsService
                         mobileNo,
                         message,
                         smsCfg["SecureKey"],
-                        template.TemplateId),
+                        templateId),
 
             "UNICODE_OTP" => _client.sendUnicodeOTPSMS(
                         smsCfg["Username"],
@@ -86,7 +167,7 @@ public class SmsService : ISmsService
                         mobileNo,
                         message,
                         smsCfg["SecureKey"],
-                        template.TemplateId),
+                        templateId),
 
             _ => _client.sendSingleSMS(
                         smsCfg["Username"],
@@ -95,7 +176,7 @@ public class SmsService : ISmsService
                         mobileNo,
                         message,
                         smsCfg["SecureKey"],
-                        template.TemplateId)
+                        templateId)
         };
     }
 

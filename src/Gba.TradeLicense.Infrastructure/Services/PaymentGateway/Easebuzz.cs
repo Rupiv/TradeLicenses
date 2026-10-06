@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using XSystem.Security.Cryptography;
 
@@ -166,6 +168,160 @@ namespace Gba.TradeLicense.Infrastructure.Services.PaymentGateway
             {
                 string paymentUrl = "https://pay.easebuzz.in";
                 return paymentUrl;
+            }
+        }
+
+        public string getDashboardURL()
+        {
+            return env == "test"
+                ? "https://testdashboard.easebuzz.in"
+                : "https://dashboard.easebuzz.in";
+        }
+
+        /* =========================================================
+           SEAMLESS / HOSTED CHECKOUT (initiateLink -> access key)
+        ========================================================= */
+        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+
+        public sealed class InitiateLinkResult
+        {
+            public bool Success { get; set; }
+            public string AccessKey { get; set; } = string.Empty;
+            public string Error { get; set; } = string.Empty;
+            public string RawResponse { get; set; } = string.Empty;
+        }
+
+        // Step 1: POST /payment/initiateLink -> returns access key
+        public async Task<InitiateLinkResult> InitiatePaymentLinkAsync(
+            string amount, string firstname, string email, string phone, string productinfo,
+            string surl, string furl, string txnId,
+            string udf1 = "", string udf2 = "", string udf3 = "", string udf4 = "", string udf5 = "",
+            string udf6 = "", string udf7 = "", string udf8 = "", string udf9 = "", string udf10 = "")
+        {
+            var data = new Dictionary<string, string>
+            {
+                ["key"] = Key,
+                ["txnid"] = txnId.Trim(),
+                ["amount"] = amount.Trim(),
+                ["productinfo"] = productinfo.Trim(),
+                ["firstname"] = firstname.Trim(),
+                ["phone"] = phone.Trim(),
+                ["email"] = email.Trim(),
+                ["surl"] = surl.Trim(),
+                ["furl"] = furl.Trim(),
+                ["udf1"] = udf1.Trim(),
+                ["udf2"] = udf2.Trim(),
+                ["udf3"] = udf3.Trim(),
+                ["udf4"] = udf4.Trim(),
+                ["udf5"] = udf5.Trim(),
+                ["udf6"] = udf6.Trim(),
+                ["udf7"] = udf7.Trim(),
+                ["udf8"] = udf8.Trim(),
+                ["udf9"] = udf9.Trim(),
+                ["udf10"] = udf10.Trim()
+            };
+
+            // key|txnid|amount|productinfo|firstname|email|udf1|...|udf10|salt
+            string hashString = string.Join("|", new[]
+            {
+                data["key"], data["txnid"], data["amount"], data["productinfo"], data["firstname"], data["email"],
+                data["udf1"], data["udf2"], data["udf3"], data["udf4"], data["udf5"],
+                data["udf6"], data["udf7"], data["udf8"], data["udf9"], data["udf10"]
+            }) + "|" + salt;
+            data["hash"] = Easebuzz_Generatehash512(hashString).ToLower();
+
+            var result = new InitiateLinkResult();
+            try
+            {
+                using var response = await _http.PostAsync(
+                    getURL() + "/payment/initiateLink",
+                    new FormUrlEncodedContent(data));
+                result.RawResponse = await response.Content.ReadAsStringAsync();
+
+                // { "status": 1, "data": "<access key>" }  |  { "status": 0, "error_desc": "...", "data": "..." }
+                using var doc = JsonDocument.Parse(result.RawResponse);
+                var root = doc.RootElement;
+                int status = root.TryGetProperty("status", out var s)
+                    ? (s.ValueKind == JsonValueKind.Number ? s.GetInt32() : (int.TryParse(s.ToString(), out var n) ? n : 0))
+                    : 0;
+                string dataValue = root.TryGetProperty("data", out var d) ? d.ToString() : string.Empty;
+
+                if (status == 1 && !string.IsNullOrWhiteSpace(dataValue))
+                {
+                    result.Success = true;
+                    result.AccessKey = dataValue;
+                }
+                else
+                {
+                    result.Error = root.TryGetProperty("error_desc", out var e) && !string.IsNullOrWhiteSpace(e.ToString())
+                        ? e.ToString()
+                        : (string.IsNullOrWhiteSpace(dataValue) ? "Payment initiation failed" : dataValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Error = "Unable to reach payment gateway: " + ex.Message;
+            }
+            return result;
+        }
+
+        // Step 2: browser is sent to https://pay.easebuzz.in/pay/{accessKey}
+        public string GetCheckoutUrl(string accessKey)
+        {
+            return getURL() + "/pay/" + Uri.EscapeDataString(accessKey);
+        }
+
+        // Step 3: verify the hash Easebuzz posts back to surl / furl
+        // salt|status|udf10|udf9|...|udf1|email|firstname|productinfo|amount|txnid|key
+        public bool VerifyResponseHash(IDictionary<string, string> form)
+        {
+            string Get(string k) => form.TryGetValue(k, out var v) ? (v ?? string.Empty) : string.Empty;
+
+            string hashString = string.Join("|", new[]
+            {
+                salt, Get("status"),
+                Get("udf10"), Get("udf9"), Get("udf8"), Get("udf7"), Get("udf6"),
+                Get("udf5"), Get("udf4"), Get("udf3"), Get("udf2"), Get("udf1"),
+                Get("email"), Get("firstname"), Get("productinfo"), Get("amount"), Get("txnid"), Key
+            });
+
+            string expected = Easebuzz_Generatehash512(hashString).ToLower();
+            return string.Equals(expected, Get("hash"), StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Step 4: Transaction status API v2.1 (server-to-server)
+        // POST https://dashboard.easebuzz.in/transaction/v2.1/retrieve   hash = key|txnid|salt
+        public async Task<string> RetrieveTransactionV21Async(string txnId)
+        {
+            string hash = Easebuzz_Generatehash512(Key + "|" + txnId.Trim() + "|" + salt).ToLower();
+            var body = JsonSerializer.Serialize(new { txnid = txnId.Trim(), key = Key, hash });
+
+            using var response = await _http.PostAsync(
+                getDashboardURL() + "/transaction/v2.1/retrieve",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        // Reads the transaction status ("success", "failure", "userCancelled", ...) from a v2.1 response.
+        // Returns null when the response does not contain a transaction.
+        public static string? ReadTransactionStatus(string v21Response)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(v21Response);
+                if (!doc.RootElement.TryGetProperty("msg", out var msg)) return null;
+
+                var txn = msg.ValueKind == JsonValueKind.Array
+                    ? (msg.GetArrayLength() > 0 ? msg[0] : default)
+                    : msg;
+
+                return txn.ValueKind == JsonValueKind.Object && txn.TryGetProperty("status", out var st)
+                    ? st.GetString()
+                    : null;
+            }
+            catch
+            {
+                return null;
             }
         }
 

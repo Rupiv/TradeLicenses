@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 [AllowAnonymous]
@@ -98,6 +100,14 @@ public class AuthController : ControllerBase
             });
         }
 
+        if (!await IsCaptchaValid(dto.CaptchaToken))
+        {
+            return BadRequest(new
+            {
+                Message = "Invalid CAPTCHA"
+            });
+        }
+
         var result = await _authService.LoginUserByMobileAsync(
             dto.MobileNumber,
             ct
@@ -113,6 +123,38 @@ public class AuthController : ControllerBase
         });
     }
 
+    // ----------------- Google reCAPTCHA check -----------------
+    private async Task<bool> IsCaptchaValid(string? token)
+    {
+        // Set ReCaptcha:BypassValidation = true only for local/dev
+        if (_config.GetValue<bool>("ReCaptcha:BypassValidation"))
+            return true;
+
+        if (string.IsNullOrEmpty(token))
+            return false;
+
+        // Same as live build: frontend sends "test" when captcha is disabled
+        if (token == "test")
+            return true;
+
+        try
+        {
+            var secret = _config["ReCaptcha:SecretKey"];
+            using var client = new HttpClient();
+            var response = await client.PostAsync(
+                "https://www.google.com/recaptcha/api/siteverify?secret=" + secret + "&response=" + token,
+                null);
+            var json = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("success", out var success) && success.GetBoolean();
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
 
 
     // ----------------- Login -----------------
@@ -124,6 +166,11 @@ public class AuthController : ControllerBase
             string.IsNullOrWhiteSpace(request.Password))
         {
             return BadRequest(new { Error = "Username/Phone and Password are required." });
+        }
+
+        if (!await IsCaptchaValid(request.CaptchaToken))
+        {
+            return BadRequest(new { Error = "Invalid CAPTCHA" });
         }
 
         // ✅ Capture IP & Browser SERVER-SIDE (trusted)
@@ -190,12 +237,15 @@ public class AuthController : ControllerBase
         string date = DateTime.Now.ToString("dd-MM-yyyy");
         string time = DateTime.Now.ToString("HH:mm");
 
+        // Order must match the DLT template:
+        // "OTP IS {#var#} at {#var#} on {#var#} for Trade License Registration. ... {#var#} City Corporation Trade License."
         await _sms.SendAsync(
             "OTP_PAYMENT",
             mobileNo,
             otp,
+            time,
             date,
-            time);
+            _config["Sms:CorporationName"] ?? "BBMP");
 
         string maskedMobile = mobileNo.Length > 4
             ? new string('X', mobileNo.Length - 4) + mobileNo[^4..]

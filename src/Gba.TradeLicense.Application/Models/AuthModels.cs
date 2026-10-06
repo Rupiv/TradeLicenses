@@ -6,7 +6,8 @@
 // Client sends ONLY credentials (no IP, no browser)
 public sealed record LoginRequest(
     string UsernameOrPhone,
-    string Password
+    string Password,
+    string? CaptchaToken
 );
 public sealed record RegisterUserDto
 (
@@ -17,7 +18,8 @@ public sealed record RegisterUserDto
 
 public sealed record LoginDto
 (
-    string MobileNumber
+    string MobileNumber,
+    string? CaptchaToken
 );
 
 // Result returned by Login Stored Procedure (usp_LoginUser)

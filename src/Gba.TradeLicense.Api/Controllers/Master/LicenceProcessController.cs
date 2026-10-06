@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Net;
 using System.Text.RegularExpressions;
+using Gba.TradeLicense.Api.Services;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
@@ -13,10 +14,12 @@ namespace Gba.TradeLicense.Api.Controllers.Master
     public class LicenceProcessController : ControllerBase
     {
         private readonly IConfiguration _config;
+        private readonly ApplicationSmsNotifier _smsNotifier;
 
-        public LicenceProcessController(IConfiguration config)
+        public LicenceProcessController(IConfiguration config, ApplicationSmsNotifier smsNotifier)
         {
             _config = config;
+            _smsNotifier = smsNotifier;
         }
 
         private IDbConnection Db()
@@ -82,7 +85,11 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             }
 
             if (result != null && result.Success == 1)
+            {
+                // 📩 APP_APPROVED (process 3) / APP_REJECTED (process 4) SMS to the applicant
+                await _smsNotifier.ProcessActionAsync(request.LicenceApplicationID, request.LicenceProcessID);
                 return Ok(result);
+            }
 
             return BadRequest(result);
         }

@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -49,13 +50,43 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            1️⃣ INITIATE PAYMENT
         ========================================================= */
-        [HttpPost("initiate")]
-        public IActionResult InitiatePayment([FromBody] InitiatePaymentDto req)
+        /* =========================================================
+           HELPER : URLS (from appsettings, with safe fallbacks)
+        ========================================================= */
+        // Where Easebuzz posts the result back (surl / furl) -> this controller's payment-success
+        private string GatewayReturnUrl(string configKey)
         {
+            var url = _config[configKey];
+            return string.IsNullOrWhiteSpace(url)
+                ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/payment/payment-success"
+                : url;
+        }
+
+        // Angular app base, e.g. https://gbatrade.karnataka.gov.in/gba
+        private string FrontendBaseUrl()
+            => (_config["Easebuzz:FrontendBaseUrl"] ?? "https://gbatrade.karnataka.gov.in/gba").TrimEnd('/');
+
+        private IActionResult RedirectToFailed(string txnid, string error)
+            => Redirect($"{FrontendBaseUrl()}/trader/payment-failed" +
+                        $"?txnid={Uri.EscapeDataString(txnid ?? string.Empty)}" +
+                        $"&error={Uri.EscapeDataString(error ?? string.Empty)}");
+
+        [HttpPost("initiate")]
+        public async Task<IActionResult> InitiatePayment([FromBody] InitiatePaymentDto req)
+        {
+            if (req == null || req.LicenceApplicationId <= 0 || req.Amount <= 0)
+                return BadRequest(new { Message = "Invalid payment request" });
+
+            if (string.IsNullOrWhiteSpace(req.ApplicantName) ||
+                string.IsNullOrWhiteSpace(req.Email) ||
+                string.IsNullOrWhiteSpace(req.Phone))
+                return BadRequest(new { Message = "Applicant name, email and phone are required for payment" });
+
             var cfg = GetGatewayConfig(req.CorporationId);
             var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
 
-            string txnid = $"GBA-TL-{req.LicenceApplicationId}";
+            // Easebuzz needs a unique txnid per attempt (a retry after failure must not reuse it)
+            string txnid = $"GBA-TL-{req.LicenceApplicationId}-{DateTime.Now:yyMMddHHmmss}";
 
             using var con = new SqlConnection(_connectionString);
 
@@ -71,21 +102,47 @@ namespace Gba.TradeLicense.Api.Controllers
                 RequestPayload = JsonConvert.SerializeObject(req)
             }, commandType: CommandType.StoredProcedure);
 
-            string htmlForm = easebuzz.initiatePaymentAPI(
-                req.Amount.ToString("0.00"),
+            // 1️⃣ initiateLink -> access key
+            var link = await easebuzz.InitiatePaymentLinkAsync(
+                req.Amount.ToString("0.00", CultureInfo.InvariantCulture),
                 req.ApplicantName,
                 req.Email,
                 req.Phone,
                 "Trade Licence Fee",
-                _config["Easebuzz:SuccessUrl"],
-                _config["Easebuzz:FailureUrl"],
+                GatewayReturnUrl("Easebuzz:SuccessUrl"),
+                GatewayReturnUrl("Easebuzz:FailureUrl"),
                 txnid,
                 req.CorporationId.ToString(),        // udf1
-                req.LicenceApplicationId.ToString(), // udf2
-                "", "", "", "", "", "", "", "", "", ""
+                req.LicenceApplicationId.ToString()  // udf2
             );
 
-            return Ok(new { TxnId = txnid, Html = htmlForm });
+            if (!link.Success)
+            {
+                con.Execute("usp_Payment_Audit_Log", new
+                {
+                    LicenceApplicationId = req.LicenceApplicationId,
+                    CorporationId = req.CorporationId,
+                    TxnId = txnid,
+                    Amount = req.Amount,
+                    PaymentStage = "INITIATE_FAILED",
+                    GatewayStatus = "FAILED",
+                    ResponsePayload = link.RawResponse
+                }, commandType: CommandType.StoredProcedure);
+
+                return BadRequest(new { Message = link.Error, TxnId = txnid });
+            }
+
+            // 2️⃣ checkout page: https://pay.easebuzz.in/pay/{accesskey}
+            string paymentUrl = easebuzz.GetCheckoutUrl(link.AccessKey);
+
+            return Ok(new
+            {
+                TxnId = txnid,
+                AccessKey = link.AccessKey,
+                PaymentUrl = paymentUrl,
+                // kept so an older frontend build (which submits this form) still works
+                Html = $"<form id=\"PostForm\" name=\"PostForm\" action=\"{paymentUrl}\" method=\"GET\"></form>"
+            });
         }
 
         /* =========================================================
@@ -150,18 +207,17 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            3️⃣ VERIFY PAYMENT (READ-ONLY)
         ========================================================= */
+        // Transaction status API v2.1 (only Txnid + CorporationId are needed)
         [HttpPost("verify")]
-        public IActionResult VerifyPayment([FromBody] VerifyPaymentDto req)
+        public async Task<IActionResult> VerifyPayment([FromBody] VerifyPaymentDto req)
         {
+            if (req == null || string.IsNullOrWhiteSpace(req.Txnid))
+                return BadRequest(new { Message = "Txnid is required" });
+
             var cfg = GetGatewayConfig(req.CorporationId);
             var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
 
-            string response = easebuzz.transactionAPI(
-                req.Txnid,
-                req.Amount.ToString("0.00"),
-                req.Email,
-                req.Phone
-            );
+            string response = await easebuzz.RetrieveTransactionV21Async(req.Txnid);
 
             return Ok(JObject.Parse(response));
         }
@@ -239,25 +295,56 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ====================================================
                          SUCCESS
           ========================================================*/
+        // Easebuzz posts here from the user's browser (surl AND furl) -> no JWT, so anonymous;
+        // the response hash is verified before anything is trusted.
+        [AllowAnonymous]
         [HttpPost("payment-success")]
-        public IActionResult PaymentSuccess([FromForm] IFormCollection form)
+        public async Task<IActionResult> PaymentSuccess([FromForm] IFormCollection form)
         {
+            var txnid = form["txnid"].ToString();
             try
             {
                 // ✅ Safe parsing
                 if (!int.TryParse(form["udf1"], out var corporationId))
-                    return BadRequest("Invalid corporationId");
+                    return RedirectToFailed(txnid, "Invalid payment response");
 
                 if (!long.TryParse(form["udf2"], out var applicationId))
-                    return BadRequest("Invalid applicationId");
+                    return RedirectToFailed(txnid, "Invalid payment response");
 
-                if (!decimal.TryParse(form["amount"], out var amount))
-                    return BadRequest("Invalid amount");
+                if (!decimal.TryParse(form["amount"], NumberStyles.Number, CultureInfo.InvariantCulture, out var amount))
+                    return RedirectToFailed(txnid, "Invalid payment response");
 
-                var txnid = form["txnid"].ToString();
                 var status = form["status"].ToString();
                 var email = form["email"].ToString();
                 var phone = form["phone"].ToString();
+
+                // 🔐 Verify Easebuzz response hash (rejects forged "status=success" posts)
+                var cfg = GetGatewayConfig(corporationId);
+                var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
+                var formValues = form.ToDictionary(x => x.Key, x => x.Value.ToString());
+
+                if (!easebuzz.VerifyResponseHash(formValues))
+                    return RedirectToFailed(txnid, "Payment response could not be verified");
+
+                // 🔐 Double-check with Transaction API v2.1 before marking the application paid
+                if (status.Equals("success", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        var gatewayStatus = Easebuzz.ReadTransactionStatus(
+                            await easebuzz.RetrieveTransactionV21Async(txnid));
+
+                        if (gatewayStatus != null &&
+                            !gatewayStatus.Equals("success", StringComparison.OrdinalIgnoreCase))
+                        {
+                            status = gatewayStatus;
+                        }
+                    }
+                    catch
+                    {
+                        // status API unreachable -> rely on the verified hash
+                    }
+                }
 
                 using var con = new SqlConnection(_connectionString);
 
@@ -284,6 +371,13 @@ namespace Gba.TradeLicense.Api.Controllers
                             licenceApplicationID = applicationId
                         },
                         commandType: CommandType.StoredProcedure);
+                }
+                else
+                {
+                    var reason = form["error_Message"].ToString();
+                    if (string.IsNullOrWhiteSpace(reason)) reason = form["error"].ToString();
+                    if (string.IsNullOrWhiteSpace(reason)) reason = $"Payment {status}";
+                    return RedirectToFailed(txnid, reason);
                 }
 
                 // 🔐 STEP 1: Create payload
@@ -319,7 +413,7 @@ namespace Gba.TradeLicense.Api.Controllers
 
                 // 🔐 FINAL REDIRECT (encrypted only)
                 return Redirect(
-                    $"https://pickitover.com/gba/trader/payment-success" +
+                    $"{FrontendBaseUrl()}/trader/payment-success" +
                     $"?data={Uri.EscapeDataString(encryptedData)}" +
                     $"&key={Uri.EscapeDataString(encryptedKey)}" +
                     $"&iv={Uri.EscapeDataString(iv)}"
@@ -327,7 +421,7 @@ namespace Gba.TradeLicense.Api.Controllers
             }
             catch
             {
-                return StatusCode(500, "Internal server error");
+                return RedirectToFailed(txnid, "Payment received but could not be processed. Please contact support with this Transaction ID.");
             }
         }
         [HttpGet("decrypt-payment")]

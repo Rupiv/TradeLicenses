@@ -3,6 +3,7 @@ using Dapper;
 using Gba.TradeLicense.Application.Abstractions;
 
 using Gba.TradeLicense.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
@@ -48,6 +49,8 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ==========================================================
            SEND OTP
         ========================================================== */
+        // Used by login / registration / new application before the user has a JWT
+        [AllowAnonymous]
         [HttpPost("otp/send")]
         public async Task<IActionResult> SendOtp(
             [FromBody] OtpRequest req)
@@ -96,6 +99,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ==========================================================
            VERIFY OTP
         ========================================================== */
+        [AllowAnonymous]
         [HttpPost("otp/verify")]
         public async Task<IActionResult> VerifyOtp(
             [FromBody] OtpVerifyRequestDto req)

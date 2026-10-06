@@ -8,16 +8,19 @@ using System.Threading;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
+using Gba.TradeLicense.Api.Services;
 
 [ApiController]
 [Route("api/licence-application")]
 public class LicenceApplicationController : ControllerBase
 {
     private readonly IConfiguration _config;
+    private readonly ApplicationSmsNotifier _smsNotifier;
 
-    public LicenceApplicationController(IConfiguration config)
+    public LicenceApplicationController(IConfiguration config, ApplicationSmsNotifier smsNotifier)
     {
         _config = config;
+        _smsNotifier = smsNotifier;
     }
 
     private IDbConnection CreateConnection()
@@ -225,6 +228,10 @@ public class LicenceApplicationController : ControllerBase
                 Message = "No response from database."
             });
         }
+
+        // 📩 APP_RECEIVED SMS (only on the first successful submit, not on "already submitted")
+        if (result.Submitted)
+            await _smsNotifier.ApplicationReceivedAsync(id, result.ApplicationNumber);
 
         // return exactly what SQL sends
         return Ok(result);
