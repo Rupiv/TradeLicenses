@@ -24,10 +24,15 @@ namespace Gba.TradeLicense.Api.Controllers
     {
         private readonly IConfiguration _config;
         private readonly string _connectionString;
+        private readonly Gba.TradeLicense.Api.Services.GbaLocationService _gba;
+        private readonly Microsoft.Extensions.Logging.ILogger<PaymentController> _logger;
 
-        public PaymentController(IConfiguration config)
+        public PaymentController(IConfiguration config, Gba.TradeLicense.Api.Services.GbaLocationService gba,
+            Microsoft.Extensions.Logging.ILogger<PaymentController> logger)
         {
             _config = config;
+            _gba = gba;
+            _logger = logger;
             _connectionString = _config.GetConnectionString("Default");
         }
 
@@ -53,18 +58,31 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            HELPER : URLS (from appsettings, with safe fallbacks)
         ========================================================= */
+        // The same build runs on more than one domain (internal server pickitover.com, live
+        // gbatrade.karnataka.gov.in). A configured URL for ANOTHER domain would send the user back
+        // to a site where they are not logged in, so the payment is never completed. Configured URLs
+        // are used only when they are on the domain this request came in on; otherwise the URL is
+        // built from the current request. (Domain compared without port, so local dev keeps
+        // appsettings.Development.json: localhost:4200 vs localhost:7181.)
+        private bool IsCurrentHost(string? url) =>
+            Uri.TryCreate(url, UriKind.Absolute, out var u) &&
+            string.Equals(u.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase);
+
         // Where Easebuzz posts the result back (surl / furl) -> this controller's payment-success
         private string GatewayReturnUrl(string configKey)
         {
             var url = _config[configKey];
-            return string.IsNullOrWhiteSpace(url)
-                ? $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/payment/payment-success"
-                : url;
+            return IsCurrentHost(url)
+                ? url!
+                : $"{Request.Scheme}://{Request.Host}{Request.PathBase}/api/payment/payment-success";
         }
 
-        // Angular app base, e.g. https://gbatrade.karnataka.gov.in/gba
+        // Angular app base, e.g. https://gbatrade.karnataka.gov.in/gba (the app is hosted under /gba)
         private string FrontendBaseUrl()
-            => (_config["Easebuzz:FrontendBaseUrl"] ?? "https://gbatrade.karnataka.gov.in/gba").TrimEnd('/');
+        {
+            var url = _config["Easebuzz:FrontendBaseUrl"];
+            return (IsCurrentHost(url) ? url! : $"{Request.Scheme}://{Request.Host}/gba").TrimEnd('/');
+        }
 
         private IActionResult RedirectToFailed(string txnid, string error)
             => Redirect($"{FrontendBaseUrl()}/trader/payment-failed" +
@@ -81,6 +99,13 @@ namespace Gba.TradeLicense.Api.Controllers
                 string.IsNullOrWhiteSpace(req.Email) ||
                 string.IsNullOrWhiteSpace(req.Phone))
                 return BadRequest(new { Message = "Applicant name, email and phone are required for payment" });
+
+            // Fee goes to the corporation of the applicant's GBA ward - decided server-side,
+            // never taken from the client (it used to be hardcoded to 1 = BBMP East).
+            var corporationId = await _gba.GetCorporationForDraftApplicationAsync(req.LicenceApplicationId);
+            if (corporationId == null)
+                return BadRequest(new { Message = "Ward / corporation is not set for this application. Please select the ward and save again." });
+            req.CorporationId = corporationId.Value;
 
             var cfg = GetGatewayConfig(req.CorporationId);
             var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
@@ -419,8 +444,9 @@ namespace Gba.TradeLicense.Api.Controllers
                     $"&iv={Uri.EscapeDataString(iv)}"
                 );
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "payment-success processing failed for txnid {TxnId}", txnid);
                 return RedirectToFailed(txnid, "Payment received but could not be processed. Please contact support with this Transaction ID.");
             }
         }

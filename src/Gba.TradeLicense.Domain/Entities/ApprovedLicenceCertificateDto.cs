@@ -30,6 +30,16 @@ namespace Gba.TradeLicense.Domain.Entities
         public int? WardID { get; set; }
         public string WardName { get; set; }
         public string ApplicationStatus { get; set; }
+
+        // GBA: set only when the licence's corporation/ward was confirmed (new application or renewal)
+        public string? CorporationName { get; set; }
+        public string? CorporationNativeName { get; set; }
+        public string? GbaWardName { get; set; }
+
+        // Online (portal) applications only: validity end, amount actually paid and payment mode
+        public DateTime? ValidUpto { get; set; }
+        public decimal? AmountPaid { get; set; }
+        public string? PaymentMode { get; set; }
     }
     public class ApproverDashboardDto
     {

@@ -31,4 +31,9 @@
 		<!-- Identity -->
 		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="8.0.8" />
 	</ItemGroup>
+
+	<!-- CryptoHelper reads these from <app>\Security\Keys at runtime (payment-success redirect) -->
+	<ItemGroup>
+		<None Update="Security\Keys\*.pem" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 </Project>

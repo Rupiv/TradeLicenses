@@ -116,11 +116,56 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
             });
         }
 
+        /// <summary>Draft (Licence_Application_Temp) id -> latest submitted Licence_Application id, or null.</summary>
+        private async Task<long?> ResolveSubmittedApplicationIdAsync(int draftId, CancellationToken ct)
+        {
+            var conn = _db.Database.GetDbConnection();
+            var opened = false;
+            if (conn.State != System.Data.ConnectionState.Open)
+            {
+                await conn.OpenAsync(ct);
+                opened = true;
+            }
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText =
+                    @"SELECT TOP 1 la.licenceApplicationID
+                      FROM dbo.Licence_Application_Temp t
+                      JOIN dbo.Licence_Application la
+                        ON la.tradeLicenceID = t.tradeLicenceID AND la.loginID = t.loginID
+                      WHERE t.licenceApplicationID = @draftId
+                      ORDER BY la.licenceApplicationID DESC";
+                var p = cmd.CreateParameter();
+                p.ParameterName = "@draftId";
+                p.Value = draftId;
+                cmd.Parameters.Add(p);
+                var result = await cmd.ExecuteScalarAsync(ct);
+                return result is null or DBNull ? null : Convert.ToInt64(result);
+            }
+            finally
+            {
+                if (opened) await conn.CloseAsync();
+            }
+        }
+
         [HttpGet("{licenceApplicationID:int}/download")]
-        public async Task<IActionResult> Download(int licenceApplicationID, CancellationToken ct)
+        public async Task<IActionResult> Download(int licenceApplicationID, [FromQuery] bool draft, CancellationToken ct)
         {
             try
             {
+                // Trader dashboard passes its draft id (Licence_Application_Temp) with ?draft=true;
+                // the licence is saved under the submitted Licence_Application id. Only map when
+                // asked: draft ids and old submitted ids overlap, so guessing could return
+                // somebody else's licence.
+                if (draft)
+                {
+                    var submittedId = await ResolveSubmittedApplicationIdAsync(licenceApplicationID, ct);
+                    if (submittedId is not long sid)
+                        return NotFound("Generated licence not found.");
+                    licenceApplicationID = (int)sid;
+                }
+
                 var cert = await _db.GeneratedLicenceCertificate
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.LicenceApplicationID == licenceApplicationID, ct);

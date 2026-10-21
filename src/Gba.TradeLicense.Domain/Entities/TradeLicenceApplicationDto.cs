@@ -26,6 +26,8 @@ namespace Gba.TradeLicense.Domain.Entities
         public int TradeLicenceID { get; set; }
         public string ApplicantName { get; set; }
         public string TradeName { get; set; }
+        /// <summary>Paid, but never submitted to the officers (payment redirect failed) -> trader can complete it.</summary>
+        public bool AwaitingSubmission { get; set; }
         public GeoLocationDtos? GeoLocation { get; set; }
         public List<DocumentDto> Documents { get; set; } = new();
     }

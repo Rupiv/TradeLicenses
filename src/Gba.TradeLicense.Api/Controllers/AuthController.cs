@@ -5,7 +5,9 @@ using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 using System.Data;
 using System.Net.Http;
 using System.Text.Json;
@@ -19,13 +21,14 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly ISmsService _sms;
     private readonly IConfiguration _config;
+    private readonly IMemoryCache _cache;
 
-    public AuthController(IAuthService authService, ISmsService sms, IConfiguration config)
+    public AuthController(IAuthService authService, ISmsService sms, IConfiguration config, IMemoryCache cache)
     {
         _authService = authService;
         _sms = sms;
         _config = config;
-        
+        _cache = cache;
     }
     private IDbConnection Db()
              => new SqlConnection(_config.GetConnectionString("Default"));
@@ -204,23 +207,20 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> SendOtp([FromBody] ForgotPasswordRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Login))
-            return BadRequest("Login is required");
+            return BadRequest(new { Message = "Username is required" });
 
         using var db = Db();
 
-        var user = await db.QueryFirstOrDefaultAsync<ForgotPasswordUser>(
-            "USP_ADMIN_FORGOT_PASSWORD",
-            new
-            {
-                Action = "GET_MOBILE",
-                Login = req.Login
-            },
-            commandType: CommandType.StoredProcedure);
+        var user = await GetForgotPasswordUser(db, req.Login);
 
-        if (user == null)
-            return BadRequest("User not found");
+        if (user == null || string.IsNullOrWhiteSpace(user.MobileNo))
+            return BadRequest(new { Message = "User not found" });
 
         string mobileNo = user.MobileNo;
+
+        // If the user typed a mobile number, it must be the one registered for this username
+        if (!string.IsNullOrWhiteSpace(req.MobileNo) && LastTenDigits(req.MobileNo) != LastTenDigits(mobileNo))
+            return BadRequest(new { Message = "Mobile number does not match the registered mobile for this username" });
 
         string? otp = await db.ExecuteScalarAsync<string>(
             "USP_OTP_PROCESS",
@@ -232,20 +232,24 @@ public class AuthController : ControllerBase
             commandType: CommandType.StoredProcedure);
 
         if (string.IsNullOrEmpty(otp))
-            return BadRequest("OTP generation failed");
+            return StatusCode(500, new { Message = "OTP could not be generated" });
 
         string date = DateTime.Now.ToString("dd-MM-yyyy");
         string time = DateTime.Now.ToString("HH:mm");
 
         // Order must match the DLT template:
         // "OTP IS {#var#} at {#var#} on {#var#} for Trade License Registration. ... {#var#} City Corporation Trade License."
-        await _sms.SendAsync(
+        string gatewayResponse = await _sms.SendAsync(
             "OTP_PAYMENT",
             mobileNo,
             otp,
             time,
             date,
             _config["Sms:CorporationName"] ?? "BBMP");
+
+        // Same check as SmsController: the gateway returns "402,MsgID = ..." when the message is accepted
+        if (gatewayResponse == null || !gatewayResponse.TrimStart().StartsWith("402"))
+            return StatusCode(502, new { Message = "Failed to send OTP. Please try again." });
 
         string maskedMobile = mobileNo.Length > 4
             ? new string('X', mobileNo.Length - 4) + mobileNo[^4..]
@@ -263,27 +267,41 @@ public class AuthController : ControllerBase
     ========================================================== */
 
     [HttpPost("forgot-password/verify-otp")]
-    public async Task<IActionResult> VerifyOtp([FromBody] OtpVerifyRequestDto req)
+    public async Task<IActionResult> VerifyOtp([FromBody] ForgotPasswordVerifyRequest req)
     {
-        if (string.IsNullOrWhiteSpace(req.MobileNo) ||
+        if (string.IsNullOrWhiteSpace(req.Login) ||
             string.IsNullOrWhiteSpace(req.Otp))
-            return BadRequest("Invalid request");
+            return BadRequest(new { Message = "Username and OTP are required" });
 
         using var db = Db();
+
+        // OTP was sent to the registered mobile, so verify against that, never a client-supplied number
+        var user = await GetForgotPasswordUser(db, req.Login);
+
+        if (user == null || string.IsNullOrWhiteSpace(user.MobileNo))
+            return BadRequest(new { Message = "User not found" });
 
         int isValid = await db.ExecuteScalarAsync<int>(
             "USP_OTP_PROCESS",
             new
             {
                 Action = "VERIFY",
-                MobileNo = req.MobileNo,
+                MobileNo = user.MobileNo,
                 OTP = req.Otp
             },
             commandType: CommandType.StoredProcedure);
 
+        if (isValid != 1)
+            return BadRequest(new { IsValid = false, Message = "Invalid or expired OTP" });
+
+        // One-time token proving the OTP was verified; required by reset-password
+        string resetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        _cache.Set(ResetTokenCacheKey(resetToken), req.Login.Trim(), TimeSpan.FromMinutes(10));
+
         return Ok(new
         {
-            IsValid = isValid == 1
+            IsValid = true,
+            ResetToken = resetToken
         });
     }
 
@@ -296,7 +314,12 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(req.Login) ||
             string.IsNullOrWhiteSpace(req.NewPassword))
-            return BadRequest("Invalid request");
+            return BadRequest(new { Message = "Username and new password are required" });
+
+        if (string.IsNullOrWhiteSpace(req.ResetToken) ||
+            !_cache.TryGetValue(ResetTokenCacheKey(req.ResetToken), out string? tokenLogin) ||
+            !string.Equals(tokenLogin, req.Login.Trim(), StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { Message = "OTP verification expired. Please verify OTP again." });
 
         using var db = Db();
 
@@ -311,11 +334,31 @@ public class AuthController : ControllerBase
             commandType: CommandType.StoredProcedure);
 
         if (result != 1)
-            return BadRequest("Password reset failed");
+            return BadRequest(new { Message = "Password reset failed" });
+
+        _cache.Remove(ResetTokenCacheKey(req.ResetToken));
 
         return Ok(new
         {
             Message = "Password reset successfully"
         });
     }
+
+    private static Task<ForgotPasswordUser?> GetForgotPasswordUser(IDbConnection db, string login)
+        => db.QueryFirstOrDefaultAsync<ForgotPasswordUser>(
+            "USP_ADMIN_FORGOT_PASSWORD",
+            new
+            {
+                Action = "GET_MOBILE",
+                Login = login
+            },
+            commandType: CommandType.StoredProcedure);
+
+    private static string LastTenDigits(string mobile)
+    {
+        var digits = new string(mobile.Where(char.IsDigit).ToArray());
+        return digits.Length > 10 ? digits[^10..] : digits;
+    }
+
+    private static string ResetTokenCacheKey(string token) => "pwd-reset:" + token;
 }

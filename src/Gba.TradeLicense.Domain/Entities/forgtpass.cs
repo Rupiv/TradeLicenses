@@ -9,6 +9,13 @@ namespace Gba.TradeLicense.Domain.Entities
     public class ForgotPasswordRequest
     {
         public string? Login { get; set; }
+        public string? MobileNo { get; set; }
+    }
+
+    public class ForgotPasswordVerifyRequest
+    {
+        public string? Login { get; set; }
+        public string? Otp { get; set; }
     }
 
     public class ForgotPasswordUser
@@ -21,6 +28,7 @@ namespace Gba.TradeLicense.Domain.Entities
     {
         public string? Login { get; set; }
         public string? NewPassword { get; set; }
+        public string? ResetToken { get; set; }
     }
 
 }

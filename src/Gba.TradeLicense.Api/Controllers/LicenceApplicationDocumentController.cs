@@ -63,15 +63,20 @@ namespace Gba.TradeLicense.Api.Controllers
             if (model.File == null || model.File.Length == 0)
                 return BadRequest("File is required");
 
-            if (model.File.Length > 2 * 1024 * 1024) // 2MB
-                return BadRequest("File size must be less than 2 MB");
+            // Inspection photos (DocumentID 10) are images taken on site; every other document is a PDF.
+            bool isInspectionPhoto = model.DocumentID == InspectionPhotoDocumentId;
+
+            long maxBytes = isInspectionPhoto ? 5 * 1024 * 1024 : 2 * 1024 * 1024;
+            if (model.File.Length > maxBytes)
+                return BadRequest(isInspectionPhoto ? "Photo size must be less than 5 MB" : "File size must be less than 2 MB");
 
             // ✅ 1. Validate Extension
-            var allowedExtensions = new[] { ".pdf" };
             var extension = Path.GetExtension(model.File.FileName).ToLower();
+            if (extension == ".jpeg") extension = ".jpg";
 
+            var allowedExtensions = isInspectionPhoto ? PhotoTypes.Keys.ToArray() : new[] { ".pdf" };
             if (!allowedExtensions.Contains(extension))
-                return BadRequest("Only PDF files are allowed");
+                return BadRequest(isInspectionPhoto ? "Only JPG, PNG or WEBP photos are allowed" : "Only PDF files are allowed");
 
             // ❌ Block dangerous extensions explicitly
             var blockedExtensions = new[] { ".aspx", ".php", ".exe", ".js", ".bat" };
@@ -79,22 +84,23 @@ namespace Gba.TradeLicense.Api.Controllers
                 return BadRequest("Invalid file type");
 
             // ✅ 2. Validate MIME Type
-            if (model.File.ContentType != "application/pdf")
+            var expectedMime = isInspectionPhoto ? PhotoTypes[extension] : "application/pdf";
+            var actualMime = (model.File.ContentType ?? string.Empty).ToLowerInvariant();
+            if (actualMime != expectedMime && !(extension == ".jpg" && actualMime == "image/jpg"))
                 return BadRequest("Invalid file type (MIME mismatch)");
 
             // ✅ 3. Validate File Signature (MAGIC NUMBER)
             using (var stream = model.File.OpenReadStream())
             {
-                byte[] buffer = new byte[4];
-                await stream.ReadAsync(buffer, 0, 4);
-                var header = System.Text.Encoding.ASCII.GetString(buffer);
+                byte[] buffer = new byte[12];
+                int read = await stream.ReadAsync(buffer, 0, buffer.Length);
 
-                if (header != "%PDF")
-                    return BadRequest("Invalid PDF file content");
+                if (!HasValidSignature(extension, buffer, read))
+                    return BadRequest(isInspectionPhoto ? "Invalid image file content" : "Invalid PDF file content");
             }
 
             // ✅ 4. Secure File Name (NO original name)
-            string storedName = Guid.NewGuid().ToString() + ".pdf";
+            string storedName = Guid.NewGuid().ToString() + extension;
 
             // ✅ 5. Secure Folder (Make sure outside wwwroot)
             string folder = GetUploadFolder();
@@ -125,8 +131,8 @@ namespace Gba.TradeLicense.Api.Controllers
 
                     FilePath = fullPath,
 
-                    // Always force .pdf
-                    FileExtension = ".pdf",
+                    // Validated type (.pdf, or .jpg/.png/.webp for inspection photos)
+                    FileExtension = extension,
 
                     FileSizeKB = model.File.Length / 1024,
                     EntryLoginID = model.LoginID
@@ -218,12 +224,41 @@ namespace Gba.TradeLicense.Api.Controllers
 
             var bytes = await System.IO.File.ReadAllBytesAsync(doc.FilePath);
 
+            // Real type so photos show as images and PDFs open in the viewer
+            var storedExt = Path.GetExtension((string)doc.FilePath).ToLowerInvariant();
+            var contentType = storedExt == ".pdf" ? "application/pdf"
+                : PhotoTypes.TryGetValue(storedExt, out var mime) ? mime
+                : "application/octet-stream";
+
             return File(
                 bytes,
-                "application/octet-stream",
+                contentType,
                 doc.FileName
             );
         }
+
+        /* =====================================================
+           FILE TYPE HELPERS
+        ===================================================== */
+        private const int InspectionPhotoDocumentId = 10;
+
+        private static readonly Dictionary<string, string> PhotoTypes = new()
+        {
+            [".jpg"] = "image/jpeg",
+            [".png"] = "image/png",
+            [".webp"] = "image/webp",
+        };
+
+        private static bool HasValidSignature(string extension, byte[] b, int read) => extension switch
+        {
+            ".pdf"  => read >= 4 && b[0] == 0x25 && b[1] == 0x50 && b[2] == 0x44 && b[3] == 0x46,            // %PDF
+            ".jpg"  => read >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF,
+            ".png"  => read >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47
+                                 && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A,
+            ".webp" => read >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+                                  && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P',
+            _ => false
+        };
 
         /* =====================================================
            SOFT DELETE DOCUMENT

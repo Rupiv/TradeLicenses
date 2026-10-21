@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -23,6 +23,7 @@ public class LicenceTradeDetailsController : ControllerBase
 
     // ================= INSERT TEMP =================
     [HttpPost("temp")]
+    [HttpPost("draft")]
     public async Task<IActionResult> InsertTemp(
      [FromBody] LicenceTradeDetailsUpsertDto dto,
      CancellationToken ct)
@@ -44,7 +45,10 @@ public class LicenceTradeDetailsController : ControllerBase
         return Ok(new { LicenceTradeDetailsID = id });
     }
 
+    // The client data-centre firewall blocks any URL with a "/temp/<more>" path; the "draft/..."
+    // routes are the same endpoints under a name it accepts (the old "temp/..." routes still work).
     [HttpGet("temp/full-details/{licenceApplicationID:long}")]
+    [HttpGet("draft/full-details/{licenceApplicationID:long}")]
     public async Task<IActionResult> GetTempFullDetails(long licenceApplicationID, CancellationToken ct)
     {
         using var db = CreateConnection();
@@ -91,6 +95,7 @@ public class LicenceTradeDetailsController : ControllerBase
     }
     // ================= UPDATE TEMP =================
     [HttpPut("temp/{id:long}")]
+    [HttpPut("draft/{id:long}")]
     public async Task<IActionResult> UpdateTemp(
         long id,
         [FromBody] LicenceTradeDetailsUpsertDto dto,
@@ -115,6 +120,7 @@ public class LicenceTradeDetailsController : ControllerBase
 
     // ================= DELETE TEMP =================
     [HttpDelete("temp/{id:long}")]
+    [HttpDelete("draft/{id:long}")]
     public async Task<IActionResult> DeleteTemp(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
@@ -134,6 +140,7 @@ public class LicenceTradeDetailsController : ControllerBase
 
     // ================= GET TEMP BY APPLICATION ID =================
     [HttpGet("temp/by-application/{licenceApplicationID:long}")]
+    [HttpGet("draft/by-application/{licenceApplicationID:long}")]
     public async Task<IActionResult> GetByApplicationId(long licenceApplicationID)
     {
         using var db = CreateConnection();

@@ -21,6 +21,8 @@ namespace Gba.TradeLicense.Application.Models
         public int? zonalClassificationID { get; set; }
         public int? mohID { get; set; }
         public int? wardID { get; set; }
+        // GBA ward (Master_GBAWard). When set, the API fills mohID / wardID from it.
+        public int? gbaWardID { get; set; }
         public int? PropertyID { get; set; }
         public string PIDNumber { get; set; }
         public string khathaNumber { get; set; }

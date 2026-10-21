@@ -82,6 +82,17 @@ public class LoginMasterController : ControllerBase
     {
         using var db = Db();
 
+        // The form says "leave blank to keep current", but the procedure always writes @password.
+        // Blank -> pass the stored password through unchanged so the user is not locked out.
+        var password = dto.Password;
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            password = await db.ExecuteScalarAsync<string?>(
+                "SELECT ISNULL(password, '') FROM dbo.Login_Master WHERE loginID = @id", new { id });
+            if (password == null)
+                return NotFound(new { Message = "User not found." });
+        }
+
         await db.ExecuteAsync(
             "usp_LoginMaster_CRUD",
             new
@@ -89,7 +100,7 @@ public class LoginMasterController : ControllerBase
                 Action = "UPDATE",
                 loginID = id,
                 dto.Login,
-                dto.Password,
+                Password = password,
                 dto.OfficeDetailsID,
                 dto.UserDesignationID,
                 dto.SakalaDO_Code,

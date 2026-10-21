@@ -13,10 +13,16 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
     public class TradeLicenceApproverController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly Gba.TradeLicense.Api.Services.GbaQueueService _gbaQueue;
 
-        public TradeLicenceApproverController(IConfiguration configuration)
+        // Inspector queue: APPLIED, REJECTED, OBJECTION (same as sp_GetTradeLicenceApplications_Approver)
+        private static readonly int[] QueueStatuses = { 2, 4, 5 };
+
+        public TradeLicenceApproverController(IConfiguration configuration,
+            Gba.TradeLicense.Api.Services.GbaQueueService gbaQueue)
         {
             _configuration = configuration;
+            _gbaQueue = gbaQueue;
         }
 
         private IDbConnection Db()
@@ -43,6 +49,26 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
                 !Regex.IsMatch(request.ApplicationNumber, @"^[a-zA-Z0-9\-\/]+$"))
             {
                 return BadRequest("Invalid Application Number");
+            }
+
+            // Officer with a GBA Corporation/Zone/Ward assignment: queue follows that assignment
+            // (mohId / wardId filters = GBA zone / GBA ward). Others: unchanged Office/MOH routing.
+            if (await _gbaQueue.HasAssignmentAsync(request.LoginId))
+            {
+                var (total, rows) = await _gbaQueue.GetApplicationsAsync<TradeLicenceApproverApplicationDto>(
+                    request.LoginId, QueueStatuses, request.MohId, request.WardId,
+                    request.LicenceApplicationId, request.ApplicationNumber, request.PageNumber, request.PageSize);
+                foreach (var x in rows) x.ApplicationNumber = WebUtility.HtmlEncode(x.ApplicationNumber);
+                return Ok(new
+                {
+                    Role = "Approver",
+                    Mode = "LIST",
+                    Scope = "GBA",
+                    TotalRecords = total,
+                    PageNumber = request.PageNumber,
+                    PageSize = request.PageSize,
+                    Data = rows
+                });
             }
 
             using var con = Db();
@@ -98,6 +124,26 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
       int? wardId,
       string? applicationNumber)
         {
+            if (await _gbaQueue.HasAssignmentAsync(loginId))
+            {
+                var c = await _gbaQueue.GetStatusCountsAsync(loginId, QueueStatuses, mohId, wardId);
+                int n(int s) => c.TryGetValue(s, out var v) ? v : 0;
+                return Ok(new
+                {
+                    Role = "Approver",
+                    Mode = "DASHBOARD",
+                    Scope = "GBA",
+                    LoginID = loginId,
+                    Data = new ApproverDashboardDto
+                    {
+                        TotalApplied = n(2),
+                        TotalObjection = n(5),
+                        TotalRejected = n(4),
+                        GrandTotal = n(2) + n(4) + n(5)
+                    }
+                });
+            }
+
             using var con = Db();
 
             var parameters = new DynamicParameters();
@@ -136,6 +182,21 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         [HttpGet("lookup")]
         public async Task<IActionResult> GetLookup(int loginId)
         {
+            // GBA-assigned officer: only the assigned GBA zone(s) and ward(s)
+            if (await _gbaQueue.HasAssignmentAsync(loginId))
+            {
+                var (gbaZones, gbaWards) = await _gbaQueue.GetLookupAsync(loginId);
+                return Ok(new
+                {
+                    Role = "Approver",
+                    Mode = "LOOKUP",
+                    Scope = "GBA",
+                    LoginID = loginId,
+                    Zones = gbaZones,
+                    Wards = gbaWards
+                });
+            }
+
             using var con = Db();
 
             var parameters = new DynamicParameters();

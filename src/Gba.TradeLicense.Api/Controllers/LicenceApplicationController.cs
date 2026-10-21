@@ -79,6 +79,18 @@ public class LicenceApplicationController : ControllerBase
         CancellationToken ct)
     {
         using var db = CreateConnection();
+        db.Open();
+        using var transaction = db.BeginTransaction();
+
+        // Saving draft fields must preserve the workflow status. The procedure's
+        // optional status parameter defaults to NULL when it is omitted.
+        // currentStatus is written by the same UPDATE, so keep it too (it would otherwise become NULL).
+        var current = await db.QuerySingleOrDefaultAsync<(int StatusId, int? CurrentStatus)?>(new CommandDefinition(
+            "SELECT licenceApplicationStatusID, currentStatus FROM dbo.Licence_Application_Temp WITH (UPDLOCK, HOLDLOCK) WHERE licenceApplicationID = @id",
+            new { id }, transaction, cancellationToken: ct));
+        if (current == null)
+            return NotFound(new { Message = "Application draft not found." });
+        var statusId = (int?)current.Value.StatusId;
 
         await db.ExecuteAsync(
             "usp_LicenceApplication_CRUD",
@@ -86,6 +98,8 @@ public class LicenceApplicationController : ControllerBase
             {
                 Action = "UPDATE",
                 LicenceApplicationID = id,
+                LicenceApplicationStatusID = statusId.Value,
+                CurrentStatus = current.Value.CurrentStatus,
 
                 dto.TradeTypeID,
 
@@ -104,8 +118,11 @@ public class LicenceApplicationController : ControllerBase
                 ChallanNo = dto.ChallanNo ?? "",
                 dto.NoOfYearsApplied
             },
+            transaction: transaction,
             commandType: CommandType.StoredProcedure
         );
+
+        transaction.Commit();
 
         return Ok(new { Updated = true });
     }

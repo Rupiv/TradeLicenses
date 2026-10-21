@@ -72,6 +72,8 @@ builder.Services.AddScoped<ITradeApplicationService, TradeApplicationService>();
 builder.Services.AddSingleton<KarnatakaSmsService>();
 builder.Services.AddScoped<ISmsService, SmsService>();
 builder.Services.AddScoped<Gba.TradeLicense.Api.Services.ApplicationSmsNotifier>();
+builder.Services.AddScoped<Gba.TradeLicense.Api.Services.GbaLocationService>();
+builder.Services.AddScoped<Gba.TradeLicense.Api.Services.GbaQueueService>();
 builder.Services.AddScoped<SMSHttpPostClient>();
 builder.Services.AddSingleton<BbmpBoundaryService>();
 builder.Services.AddMemoryCache();
@@ -251,6 +253,12 @@ app.UseSwaggerUI(c =>
 // --------------------------------------------------
 // PIPELINE
 // --------------------------------------------------
+// The client data-centre firewall blocks every PUT / DELETE ("Unauthorized Activity Has Been
+// Detected" HTML page). The frontend therefore sends them as POST with the header
+// X-HTTP-Method-Override: PUT / DELETE; this restores the real method before routing, so the
+// same endpoints and the same [Authorize] checks apply. Direct PUT / DELETE keep working too.
+app.UseHttpMethodOverride();
+
 app.UseRouting();
 app.UseCors("CorsPolicy");
 

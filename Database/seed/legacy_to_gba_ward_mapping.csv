@@ -1,0 +1,873 @@
+﻿legacyWardID,legacyWardName,legacyLicences,corporationId,wardNo,gbaWardName,isPrimary,matchMethod,matchScore
+1,Kempegowda Ward,1166,4,1,Raja Kempegowda ward,1,PRIMARY_OF_GBA,0.82
+2,Chowdeshwari Ward,495,4,3,Chowdeshwari ward,1,PRIMARY_OF_GBA,1.00
+3,Attur,1168,4,7,Attur,1,PRIMARY_OF_GBA,1.00
+4,Yelahanka Satellite town,1917,4,5,Yelahanka Satellite Town,1,PRIMARY_OF_GBA,1.00
+4,Yelahanka Satellite town,1917,4,6,Doddabettahalli,0,PRIMARY_OF_GBA,0.29
+4,Yelahanka Satellite town,1917,4,2,Aerocity,0,PRIMARY_OF_GBA,0.07
+4,Yelahanka Satellite town,1917,4,4,Nyayanga Badavane,0,PRIMARY_OF_GBA,0.06
+5,Jakkur,1998,4,17,Jakkur,1,PRIMARY_OF_GBA,1.00
+6,Thanisandra,2211,4,19,Thanisandra,1,PRIMARY_OF_GBA,1.00
+7,Byatarayanapura,2851,4,15,Byatarayanapura,1,PRIMARY_OF_GBA,1.00
+7,Byatarayanapura,2851,4,8,Singapura,0,PRIMARY_OF_GBA,0.36
+7,Byatarayanapura,2851,4,18,Kempapura,0,PRIMARY_OF_GBA,0.36
+7,Byatarayanapura,2851,4,14,Rajiv Gandhi Nagar,0,PRIMARY_OF_GBA,0.28
+7,Byatarayanapura,2851,4,12,Thindlu,0,PRIMARY_OF_GBA,0.00
+7,Byatarayanapura,2851,4,16,Amruthahalli,0,PRIMARY_OF_GBA,0.00
+7,Byatarayanapura,2851,4,20,Sampigehalli,0,PRIMARY_OF_GBA,0.00
+7,Byatarayanapura,2851,4,21,Kogilu,0,PRIMARY_OF_GBA,0.00
+8,Kodigehalli,893,4,13,Kodigehalli,1,PRIMARY_OF_GBA,1.00
+9,Vidyaranyapura,1151,4,10,Vidyaranyapura,1,PRIMARY_OF_GBA,1.00
+10,Doddabommasandra,401,4,11,Doddabommasandra,1,PRIMARY_OF_GBA,1.00
+11,Kuvempunagar,343,4,9,Kuvempunagara,1,PRIMARY_OF_GBA,1.00
+12,Shettyhalli,1921,4,67,Shettihalli,1,PRIMARY_OF_GBA,0.80
+12,Shettyhalli,1921,4,66,Kammagondanahalli,0,PRIMARY_OF_GBA,0.31
+12,Shettyhalli,1921,3,3,Nelagadaranahalli,0,PRIMARY_OF_GBA,0.31
+12,Shettyhalli,1921,4,71,Nele Maheshwaramma Temple Ward,0,PRIMARY_OF_GBA,0.13
+12,Shettyhalli,1921,3,6,Shivapura,0,PRIMARY_OF_GBA,0.11
+12,Shettyhalli,1921,3,10,Sunkadakatte,0,PRIMARY_OF_GBA,0.10
+12,Shettyhalli,1921,3,9,Srigandhanagar,0,PRIMARY_OF_GBA,0.09
+12,Shettyhalli,1921,4,70,Manjunatha Nagar,0,PRIMARY_OF_GBA,0.08
+12,Shettyhalli,1921,3,5,Rajeshwarinagar,0,PRIMARY_OF_GBA,0.08
+12,Shettyhalli,1921,4,65,Abbigere,0,PRIMARY_OF_GBA,0.00
+12,Shettyhalli,1921,3,1,Nagasandra,0,PRIMARY_OF_GBA,0.00
+12,Shettyhalli,1921,3,4,Parvathi Nagar,0,PRIMARY_OF_GBA,0.00
+13,Mallasandra,449,4,68,Mallasandra,1,PRIMARY_OF_GBA,1.00
+14,Bagalagunte,1239,4,69,Bagalagunte,1,PRIMARY_OF_GBA,1.00
+15,T. Dasarahalli,734,4,72,Dasarahalli,1,PRIMARY_OF_GBA,0.95
+16,Jalahalli,509,4,60,Jalahalli,1,PRIMARY_OF_GBA,1.00
+17,J.P.Park,704,4,63,J.P PARK,1,PRIMARY_OF_GBA,1.00
+18,Radhakrishna Temple Ward,868,4,58,Nagashettyhalli,1,PRIMARY_OF_GBA,0.19
+18,Radhakrishna Temple Ward,868,4,53,R.T Nagar,0,PRIMARY_OF_GBA,0.09
+18,Radhakrishna Temple Ward,868,4,57,Bhoopasandra,0,PRIMARY_OF_GBA,0.07
+18,Radhakrishna Temple Ward,868,4,59,Geddalahalli,0,PRIMARY_OF_GBA,0.07
+18,Radhakrishna Temple Ward,868,4,50,Dinnur,0,PRIMARY_OF_GBA,0.00
+19,Sanjaynagar,533,4,49,Jaya Chamarajendra Nagara,1,AC_ONLY,0.00
+19,Sanjaynagar,533,4,50,Dinnur,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,51,Manorayanapalya,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,52,Vishwanatha Nagenahalli,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,53,R.T Nagar,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,54,Gangenahalli,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,55,Ganganagar,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,56,Hebbal,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,57,Bhoopasandra,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,58,Nagashettyhalli,0,AC_ONLY,0.00
+19,Sanjaynagar,533,4,59,Geddalahalli,0,AC_ONLY,0.00
+20,Ganganagar,866,4,55,Ganganagar,1,PRIMARY_OF_GBA,1.00
+21,Hebbal,521,4,56,Hebbal,1,PRIMARY_OF_GBA,1.00
+22,VishwanathNagenahalli,727,4,52,Vishwanatha Nagenahalli,1,PRIMARY_OF_GBA,0.93
+23,Nagavara,957,4,22,Nagavara,1,PRIMARY_OF_GBA,1.00
+24,HBR Layout,1182,4,24,HBR Layout,1,PRIMARY_OF_GBA,1.00
+24,HBR Layout,1182,4,33,HRBR Layout,0,PRIMARY_OF_GBA,0.82
+25,Horamavu,3323,1,2,Horamavu,1,PRIMARY_OF_GBA,1.00
+25,Horamavu,3323,1,23,Sangama Ward,0,PRIMARY_OF_GBA,0.31
+25,Horamavu,3323,1,18,Dooravaninagar,0,PRIMARY_OF_GBA,0.30
+25,Horamavu,3323,1,22,Mahadevapura,0,PRIMARY_OF_GBA,0.22
+25,Horamavu,3323,1,27,Vibhootipura,0,PRIMARY_OF_GBA,0.22
+25,Horamavu,3323,1,8,Anandapura,0,PRIMARY_OF_GBA,0.13
+25,Horamavu,3323,1,7,K Chennasandra,0,PRIMARY_OF_GBA,0.11
+25,Horamavu,3323,1,9,Bhattarahalli,0,PRIMARY_OF_GBA,0.11
+25,Horamavu,3323,1,19,K.S. Nissar Ahmed Ward,0,PRIMARY_OF_GBA,0.11
+25,Horamavu,3323,1,5,Hoysala Nagara East,0,PRIMARY_OF_GBA,0.09
+25,Horamavu,3323,1,13,Rajarajeshwari Temple ward,0,PRIMARY_OF_GBA,0.08
+25,Horamavu,3323,1,3,Chellakere,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,4,Babusab Palya,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,6,Kalkere,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,11,Krishnanagar,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,16,Kotthur,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,21,Uday Nagar,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,25,L.B Shastri Nagar,0,PRIMARY_OF_GBA,0.00
+25,Horamavu,3323,1,26,Jagadish Nagar,0,PRIMARY_OF_GBA,0.00
+26,Ramamurthynagar,2097,1,15,Ramamurthy Nagara,1,PRIMARY_OF_GBA,1.00
+27,Banasawadi,1935,4,32,Banaswadi,1,PRIMARY_OF_GBA,0.82
+27,Banasawadi,1935,4,26,Samadhana Nagar,0,PRIMARY_OF_GBA,0.36
+27,Banasawadi,1935,4,34,Subbayanapalya,0,PRIMARY_OF_GBA,0.27
+27,Banasawadi,1935,4,31,Kalyan Nagar,0,PRIMARY_OF_GBA,0.21
+27,Banasawadi,1935,4,37,Jeevanahalli,0,PRIMARY_OF_GBA,0.20
+27,Banasawadi,1935,4,23,Hennur,0,PRIMARY_OF_GBA,0.00
+27,Banasawadi,1935,4,25,Govindapura,0,PRIMARY_OF_GBA,0.00
+27,Banasawadi,1935,4,27,K.G.Halli,0,PRIMARY_OF_GBA,0.00
+27,Banasawadi,1935,4,28,Venkateshpuram,0,PRIMARY_OF_GBA,0.00
+28,Kammanahalli,698,4,35,Kammanahalli,1,PRIMARY_OF_GBA,1.00
+29,Kacharakanahalli,1596,4,30,Kacharakanahalli,1,PRIMARY_OF_GBA,1.00
+30,Kadugondanahalli,320,4,22,Nagavara,1,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,23,Hennur,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,24,HBR Layout,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,25,Govindapura,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,26,Samadhana Nagar,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,27,K.G.Halli,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,28,Venkateshpuram,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,29,Lingarajpura,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,30,Kacharakanahalli,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,31,Kalyan Nagar,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,32,Banaswadi,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,33,HRBR Layout,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,34,Subbayanapalya,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,35,Kammanahalli,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,36,Maruthi Seva Nagara,0,AC_ONLY,0.00
+30,Kadugondanahalli,320,4,37,Jeevanahalli,0,AC_ONLY,0.00
+31,Kushalnagar,375,4,45,Kushal Nagar,1,PRIMARY_OF_GBA,1.00
+32,Kavalbyrasandra,896,4,39,Kaval Byrasandra,1,PRIMARY_OF_GBA,1.00
+33,Manorayanapalya,774,4,51,Manorayanapalya,1,PRIMARY_OF_GBA,1.00
+34,Gangenahalli,408,4,54,Gangenahalli,1,PRIMARY_OF_GBA,1.00
+35,Aramane Nagar,1207,3,49,Aramane Nagara,1,PRIMARY_OF_GBA,1.00
+35,Aramane Nagar,1207,3,50,Sadashiva Nagara,0,PRIMARY_OF_GBA,0.42
+35,Aramane Nagar,1207,3,52,Kodandarampura,0,PRIMARY_OF_GBA,0.33
+35,Aramane Nagar,1207,3,54,Subedarpalya,0,PRIMARY_OF_GBA,0.09
+35,Aramane Nagar,1207,3,57,Kuvempu Ward,0,PRIMARY_OF_GBA,0.00
+36,Mathikere,612,3,48,Mathikere,1,PRIMARY_OF_GBA,1.00
+37,Yeshwanthpur,624,4,64,Yeshwanthpura,1,PRIMARY_OF_GBA,0.96
+38,H.M.T,1197,4,61,HMT Ward,1,PRIMARY_OF_GBA,1.00
+39,Chokkasandra,991,3,2,Chokkasandra,1,PRIMARY_OF_GBA,1.00
+40,Doddabidarakallu,3904,3,11,Dodda Bidarakallu,1,PRIMARY_OF_GBA,1.00
+40,Doddabidarakallu,3904,3,15,Byadarahalli,0,PRIMARY_OF_GBA,0.38
+40,Doddabidarakallu,3904,3,13,Nada prabhu Kempegowda Nagara,0,PRIMARY_OF_GBA,0.26
+40,Doddabidarakallu,3904,3,12,Andrahalli,0,PRIMARY_OF_GBA,0.25
+40,Doddabidarakallu,3904,2,52,Talagattapura,0,PRIMARY_OF_GBA,0.15
+40,Doddabidarakallu,3904,3,17,Nagadevanahalli,0,PRIMARY_OF_GBA,0.14
+40,Doddabidarakallu,3904,3,19,Shivanapalya,0,PRIMARY_OF_GBA,0.08
+40,Doddabidarakallu,3904,3,18,Kengal Hanumanthaiah West,0,PRIMARY_OF_GBA,0.05
+40,Doddabidarakallu,3904,3,20,Kengeri Kote ward,0,PRIMARY_OF_GBA,0.00
+41,Peenya Industrial Area,811,4,65,Abbigere,1,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,66,Kammagondanahalli,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,67,Shettihalli,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,68,Mallasandra,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,69,Bagalagunte,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,70,Manjunatha Nagar,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,71,Nele Maheshwaramma Temple Ward,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,4,72,Dasarahalli,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,1,Nagasandra,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,2,Chokkasandra,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,3,Nelagadaranahalli,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,4,Parvathi Nagar,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,5,Rajeshwarinagar,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,6,Shivapura,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,7,Rajagopala Nagara,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,8,Hegganahalli,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,9,Srigandhanagar,0,AC_ONLY,0.00
+41,Peenya Industrial Area,811,3,10,Sunkadakatte,0,AC_ONLY,0.00
+42,Lakshmidevinagar,406,3,33,Lakshmi Devi Nagar,1,PRIMARY_OF_GBA,1.00
+43,Nandini Layout,432,3,38,Nandini Layout,1,PRIMARY_OF_GBA,1.00
+44,Marappanahalli,814,3,36,Nalwadi Krishnaraja Wadiyar Ward,1,AC_ONLY,0.00
+44,Marappanahalli,814,3,37,Dr. Puneeth Rajkumar Ward,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,38,Nandini Layout,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,39,Jai Maruthi Nagar,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,40,Mahalakshmipuram,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,41,Nagapura,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,42,Raja Mayura Varma Ward,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,43,Kethamaranahalli,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,44,Shankar Mutt,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,45,Shakthi Ganapathi Nagara,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,46,Kamalanagara,0,AC_ONLY,0.00
+44,Marappanahalli,814,3,47,Vrishabhavathi Nagar,0,AC_ONLY,0.00
+45,Malleshwaram,1012,3,53,Malleshwaram,1,PRIMARY_OF_GBA,1.00
+46,Jayachamarajendra Nagar,398,4,49,Jaya Chamarajendra Nagara,1,PRIMARY_OF_GBA,1.00
+47,Devarajeevanahalli,280,4,38,Shampura,1,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,39,Kaval Byrasandra,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,40,Shakthi Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,41,Periyar Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,42,Aruna Asif Ali Ward,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,43,Varalakshmi Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,44,Doddanna Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,45,Kushal Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,46,Sagayapuram,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,47,Pulakeshi Nagar,0,AC_ONLY,0.00
+47,Devarajeevanahalli,280,4,48,S.K Garden,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,38,Shampura,1,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,39,Kaval Byrasandra,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,40,Shakthi Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,41,Periyar Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,42,Aruna Asif Ali Ward,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,43,Varalakshmi Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,44,Doddanna Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,45,Kushal Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,46,Sagayapuram,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,47,Pulakeshi Nagar,0,AC_ONLY,0.00
+48,Muneshwaranagar,147,4,48,S.K Garden,0,AC_ONLY,0.00
+49,Lingarajapura,367,4,29,Lingarajpura,1,PRIMARY_OF_GBA,0.87
+50,Benniganahalli,582,5,9,Hoysala Nagara Central,1,AC_ONLY,0.00
+50,Benniganahalli,582,5,10,Cox Town,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,11,Old Baiyappanahalli,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,12,Kasturi Nagar,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,13,Krishnaiahnapalya,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,14,Nagavarapalya,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,15,Indiranagar,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,16,New Thippasandra,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,17,Kaggadasapura,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,18,G.M Palya,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,19,Jeevan Bhimanagar,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,20,Kodihalli,0,AC_ONLY,0.00
+50,Benniganahalli,582,5,21,Konena Agrahara,0,AC_ONLY,0.00
+51,Vijinapura,525,1,17,Vijinapura,1,PRIMARY_OF_GBA,1.00
+52,K.R.Puram,1622,1,14,K.R Pura,1,PRIMARY_OF_GBA,0.91
+53,Basavanapura,948,1,10,Basavanapura,1,PRIMARY_OF_GBA,1.00
+54,Hoodi,1995,1,29,Hoodi,1,PRIMARY_OF_GBA,1.00
+55,Devasandra,1591,1,12,Devasandra,1,PRIMARY_OF_GBA,1.00
+56,A. Narayanapura,796,1,20,A Narayanapura,1,PRIMARY_OF_GBA,1.00
+56,A. Narayanapura,796,1,1,K Narayanapura,0,PRIMARY_OF_GBA,0.92
+57,C.V. Ramannagar,1168,5,9,Hoysala Nagara Central,1,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,10,Cox Town,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,11,Old Baiyappanahalli,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,12,Kasturi Nagar,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,13,Krishnaiahnapalya,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,14,Nagavarapalya,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,15,Indiranagar,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,16,New Thippasandra,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,17,Kaggadasapura,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,18,G.M Palya,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,19,Jeevan Bhimanagar,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,20,Kodihalli,0,AC_ONLY,0.00
+57,C.V. Ramannagar,1168,5,21,Konena Agrahara,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,9,Hoysala Nagara Central,1,AC_ONLY,0.00
+58,Hosathippasandra,923,5,10,Cox Town,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,11,Old Baiyappanahalli,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,12,Kasturi Nagar,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,13,Krishnaiahnapalya,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,14,Nagavarapalya,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,15,Indiranagar,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,16,New Thippasandra,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,17,Kaggadasapura,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,18,G.M Palya,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,19,Jeevan Bhimanagar,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,20,Kodihalli,0,AC_ONLY,0.00
+58,Hosathippasandra,923,5,21,Konena Agrahara,0,AC_ONLY,0.00
+59,Maruthiseva Nagar,638,4,36,Maruthi Seva Nagara,1,PRIMARY_OF_GBA,1.00
+60,Sagayapuram,353,4,46,Sagayapuram,1,PRIMARY_OF_GBA,1.00
+61,S.K. Garden,427,4,48,S.K Garden,1,PRIMARY_OF_GBA,1.00
+62,Ramaswamy palya,191,5,1,Ramaswamy Palya,1,PRIMARY_OF_GBA,1.00
+63,Jayamahal,348,5,2,Jayamahal,1,PRIMARY_OF_GBA,1.00
+64,Rajamahal,446,3,51,Rajamahal,1,PRIMARY_OF_GBA,1.00
+65,Kadumalleshwara,865,3,53,Malleshwaram,1,PRIMARY_OF_GBA,0.80
+66,Subramanyanagar,961,3,55,Subramanyanagara,1,PRIMARY_OF_GBA,1.00
+67,Nagapura,897,3,41,Nagapura,1,PRIMARY_OF_GBA,1.00
+67,Nagapura,897,3,46,Kamalanagara,0,PRIMARY_OF_GBA,0.35
+67,Nagapura,897,3,39,Jai Maruthi Nagar,0,PRIMARY_OF_GBA,0.29
+67,Nagapura,897,3,42,Raja Mayura Varma Ward,0,PRIMARY_OF_GBA,0.19
+67,Nagapura,897,3,43,Kethamaranahalli,0,PRIMARY_OF_GBA,0.18
+67,Nagapura,897,3,37,Dr. Puneeth Rajkumar Ward,0,PRIMARY_OF_GBA,0.17
+67,Nagapura,897,3,36,Nalwadi Krishnaraja Wadiyar Ward,0,PRIMARY_OF_GBA,0.13
+67,Nagapura,897,3,44,Shankar Mutt,0,PRIMARY_OF_GBA,0.00
+68,Mahalakshmipuram,537,3,40,Mahalakshmipuram,1,PRIMARY_OF_GBA,1.00
+69,Laggere,833,3,32,Laggere,1,PRIMARY_OF_GBA,1.00
+70,Rajagopalanagar,485,3,7,Rajagopala Nagara,1,PRIMARY_OF_GBA,1.00
+71,Hegganahalli,575,3,8,Hegganahalli,1,PRIMARY_OF_GBA,1.00
+72,Herohalli,2480,3,14,Herohalli,1,PRIMARY_OF_GBA,1.00
+73,Kottigepalya,1803,3,28,Kottegepalya,1,PRIMARY_OF_GBA,0.82
+74,Shakthiganapathi nagar,358,3,45,Shakthi Ganapathi Nagara,1,PRIMARY_OF_GBA,1.00
+75,Shankaramata,495,3,36,Nalwadi Krishnaraja Wadiyar Ward,1,AC_ONLY,0.00
+75,Shankaramata,495,3,37,Dr. Puneeth Rajkumar Ward,0,AC_ONLY,0.00
+75,Shankaramata,495,3,38,Nandini Layout,0,AC_ONLY,0.00
+75,Shankaramata,495,3,39,Jai Maruthi Nagar,0,AC_ONLY,0.00
+75,Shankaramata,495,3,40,Mahalakshmipuram,0,AC_ONLY,0.00
+75,Shankaramata,495,3,41,Nagapura,0,AC_ONLY,0.00
+75,Shankaramata,495,3,42,Raja Mayura Varma Ward,0,AC_ONLY,0.00
+75,Shankaramata,495,3,43,Kethamaranahalli,0,AC_ONLY,0.00
+75,Shankaramata,495,3,44,Shankar Mutt,0,AC_ONLY,0.00
+75,Shankaramata,495,3,45,Shakthi Ganapathi Nagara,0,AC_ONLY,0.00
+75,Shankaramata,495,3,46,Kamalanagara,0,AC_ONLY,0.00
+75,Shankaramata,495,3,47,Vrishabhavathi Nagar,0,AC_ONLY,0.00
+76,Gayathrinagar,577,3,56,Gayathri Nagara,1,PRIMARY_OF_GBA,1.00
+77,Dattathreya Temple,967,5,54,Binnypete,1,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,55,Bhuvaneshwari Nagar,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,56,Gopalpura,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,57,Cottonpete,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,58,Chickpete,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,59,Nehru Nagar,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,60,Seshadripuram,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,61,Dattatreya Ward,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,62,Swatantra Palya Ward,0,AC_ONLY,0.00
+77,Dattathreya Temple,967,5,63,Okalipuram,0,AC_ONLY,0.00
+78,Pulikeshinagar,1369,4,47,Pulakeshi Nagar,1,PRIMARY_OF_GBA,0.85
+78,Pulikeshinagar,1369,4,40,Shakthi Nagar,0,PRIMARY_OF_GBA,0.58
+78,Pulikeshinagar,1369,4,43,Varalakshmi Nagar,0,PRIMARY_OF_GBA,0.43
+78,Pulikeshinagar,1369,4,41,Periyar Nagar,0,PRIMARY_OF_GBA,0.33
+78,Pulikeshinagar,1369,4,44,Doddanna Nagar,0,PRIMARY_OF_GBA,0.32
+78,Pulikeshinagar,1369,4,42,Aruna Asif Ali Ward,0,PRIMARY_OF_GBA,0.25
+78,Pulikeshinagar,1369,4,38,Shampura,0,PRIMARY_OF_GBA,0.20
+79,Sarvagnanagar,344,5,9,Hoysala Nagara Central,1,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,10,Cox Town,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,11,Old Baiyappanahalli,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,12,Kasturi Nagar,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,13,Krishnaiahnapalya,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,14,Nagavarapalya,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,15,Indiranagar,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,16,New Thippasandra,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,17,Kaggadasapura,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,18,G.M Palya,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,19,Jeevan Bhimanagar,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,20,Kodihalli,0,AC_ONLY,0.00
+79,Sarvagnanagar,344,5,21,Konena Agrahara,0,AC_ONLY,0.00
+80,Hoysalanagar,1994,5,9,Hoysala Nagara Central,1,PRIMARY_OF_GBA,0.76
+80,Hoysalanagar,1994,5,15,Indiranagar,0,PRIMARY_OF_GBA,0.48
+80,Hoysalanagar,1994,5,14,Nagavarapalya,0,PRIMARY_OF_GBA,0.43
+80,Hoysalanagar,1994,5,12,Kasturi Nagar,0,PRIMARY_OF_GBA,0.36
+80,Hoysalanagar,1994,5,17,Kaggadasapura,0,PRIMARY_OF_GBA,0.26
+80,Hoysalanagar,1994,5,11,Old Baiyappanahalli,0,PRIMARY_OF_GBA,0.21
+80,Hoysalanagar,1994,5,16,New Thippasandra,0,PRIMARY_OF_GBA,0.16
+80,Hoysalanagar,1994,5,13,Krishnaiahnapalya,0,PRIMARY_OF_GBA,0.15
+80,Hoysalanagar,1994,5,18,G.M Palya,0,PRIMARY_OF_GBA,0.12
+80,Hoysalanagar,1994,5,20,Kodihalli,0,PRIMARY_OF_GBA,0.11
+80,Hoysalanagar,1994,5,10,Cox Town,0,PRIMARY_OF_GBA,0.00
+81,Vignananagar,898,1,24,Vignananagara,1,PRIMARY_OF_GBA,1.00
+82,Garudacharpalya,1754,1,35,Garudachar Palya,1,PRIMARY_OF_GBA,1.00
+83,Kadugodi,1362,1,31,Kadugodi,1,PRIMARY_OF_GBA,1.00
+84,Hagadooru,1981,1,28,Byrathi,1,AC_ONLY,0.00
+84,Hagadooru,1981,1,29,Hoodi,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,30,Belathur,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,31,Kadugodi,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,32,Channasandra,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,33,S.M Krishna Ward,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,34,Kaveri Nagara,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,35,Garudachar Palya,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,36,Bharath Aikya Ward,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,37,Kundalahalli,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,38,Whitefield,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,39,Hagaduru,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,40,Varthur,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,41,Munnenkolalu,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,42,Priyadarshini Ward,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,43,Dodda Nekkundi,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,44,Ashwath Nagar,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,45,Marathahalli,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,46,Yamalur,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,47,Bellanduru,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,48,Panathur,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,49,Doddakannelli Ward,0,AC_ONLY,0.00
+84,Hagadooru,1981,1,50,Gunjur,0,AC_ONLY,0.00
+84,Hagadooru,1981,2,31,Kasavanahalli,0,AC_ONLY,0.00
+85,Doddanekkundi,3574,1,43,Dodda Nekkundi,1,PRIMARY_OF_GBA,1.00
+86,Marathalli,2814,1,45,Marathahalli,1,PRIMARY_OF_GBA,0.90
+87,HAL Airport,201,1,1,K Narayanapura,1,AC_ONLY,0.00
+87,HAL Airport,201,1,2,Horamavu,0,AC_ONLY,0.00
+87,HAL Airport,201,1,3,Chellakere,0,AC_ONLY,0.00
+87,HAL Airport,201,1,4,Babusab Palya,0,AC_ONLY,0.00
+87,HAL Airport,201,1,5,Hoysala Nagara East,0,AC_ONLY,0.00
+87,HAL Airport,201,1,6,Kalkere,0,AC_ONLY,0.00
+87,HAL Airport,201,1,7,K Chennasandra,0,AC_ONLY,0.00
+87,HAL Airport,201,1,8,Anandapura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,9,Bhattarahalli,0,AC_ONLY,0.00
+87,HAL Airport,201,1,10,Basavanapura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,11,Krishnanagar,0,AC_ONLY,0.00
+87,HAL Airport,201,1,12,Devasandra,0,AC_ONLY,0.00
+87,HAL Airport,201,1,13,Rajarajeshwari Temple ward,0,AC_ONLY,0.00
+87,HAL Airport,201,1,14,K.R Pura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,15,Ramamurthy Nagara,0,AC_ONLY,0.00
+87,HAL Airport,201,1,16,Kotthur,0,AC_ONLY,0.00
+87,HAL Airport,201,1,17,Vijinapura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,18,Dooravaninagar,0,AC_ONLY,0.00
+87,HAL Airport,201,1,19,K.S. Nissar Ahmed Ward,0,AC_ONLY,0.00
+87,HAL Airport,201,1,20,A Narayanapura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,21,Uday Nagar,0,AC_ONLY,0.00
+87,HAL Airport,201,1,22,Mahadevapura,0,AC_ONLY,0.00
+87,HAL Airport,201,1,23,Sangama Ward,0,AC_ONLY,0.00
+87,HAL Airport,201,1,24,Vignananagara,0,AC_ONLY,0.00
+87,HAL Airport,201,1,25,L.B Shastri Nagar,0,AC_ONLY,0.00
+87,HAL Airport,201,1,26,Jagadish Nagar,0,AC_ONLY,0.00
+87,HAL Airport,201,1,27,Vibhootipura,0,AC_ONLY,0.00
+88,Jeevanbhimanagar,1058,5,19,Jeevan Bhimanagar,1,PRIMARY_OF_GBA,1.00
+89,Jogupalya,531,5,23,Jogpalya,1,PRIMARY_OF_GBA,0.80
+90,Ulsoor,797,5,1,Ramaswamy Palya,1,AC_ONLY,0.00
+90,Ulsoor,797,5,2,Jayamahal,0,AC_ONLY,0.00
+90,Ulsoor,797,5,3,Vasanth Nagar,0,AC_ONLY,0.00
+90,Ulsoor,797,5,4,Sampangirama Nagar,0,AC_ONLY,0.00
+90,Ulsoor,797,5,5,Shivajinagar,0,AC_ONLY,0.00
+90,Ulsoor,797,5,6,Bharathi Nagar,0,AC_ONLY,0.00
+90,Ulsoor,797,5,7,K Kamaraj Ward,0,AC_ONLY,0.00
+90,Ulsoor,797,5,8,Halasuru,0,AC_ONLY,0.00
+91,Bharathinagar,927,5,6,Bharathi Nagar,1,PRIMARY_OF_GBA,1.00
+92,Shivajinagar,979,5,5,Shivajinagar,1,PRIMARY_OF_GBA,1.00
+93,Vasanthnagar,1023,5,3,Vasanth Nagar,1,PRIMARY_OF_GBA,1.00
+94,Gandhinagar,2194,5,55,Bhuvaneshwari Nagar,1,PRIMARY_OF_GBA,0.44
+94,Gandhinagar,2194,5,59,Nehru Nagar,0,PRIMARY_OF_GBA,0.42
+94,Gandhinagar,2194,5,58,Chickpete,0,PRIMARY_OF_GBA,0.11
+94,Gandhinagar,2194,5,62,Swatantra Palya Ward,0,PRIMARY_OF_GBA,0.09
+94,Gandhinagar,2194,5,56,Gopalpura,0,PRIMARY_OF_GBA,0.00
+94,Gandhinagar,2194,5,60,Seshadripuram,0,PRIMARY_OF_GBA,0.00
+94,Gandhinagar,2194,5,61,Dattatreya Ward,0,PRIMARY_OF_GBA,0.00
+95,Subhashnagar,1004,5,54,Binnypete,1,AC_ONLY,0.00
+95,Subhashnagar,1004,5,55,Bhuvaneshwari Nagar,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,56,Gopalpura,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,57,Cottonpete,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,58,Chickpete,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,59,Nehru Nagar,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,60,Seshadripuram,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,61,Dattatreya Ward,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,62,Swatantra Palya Ward,0,AC_ONLY,0.00
+95,Subhashnagar,1004,5,63,Okalipuram,0,AC_ONLY,0.00
+96,Okalipuram,1128,5,63,Okalipuram,1,PRIMARY_OF_GBA,1.00
+97,Dayanandanagar,925,3,58,Dayanand Nagara,1,PRIMARY_OF_GBA,0.88
+98,Prakashnagar,1285,3,60,Prakash Nagara,1,PRIMARY_OF_GBA,1.00
+98,Prakashnagar,1285,3,65,Manjunath Nagara,0,PRIMARY_OF_GBA,0.42
+98,Prakashnagar,1285,3,61,Da.Ra. Bendre Ward,0,PRIMARY_OF_GBA,0.20
+98,Prakashnagar,1285,3,62,Rama Mandira,0,PRIMARY_OF_GBA,0.10
+98,Prakashnagar,1285,3,66,Sane Guruvana Halli,0,PRIMARY_OF_GBA,0.07
+98,Prakashnagar,1285,3,59,Bandi Reddy Circle Ward,0,PRIMARY_OF_GBA,0.00
+99,Rajajinagar,1083,3,63,Rajajinagara,1,PRIMARY_OF_GBA,1.00
+100,Basaveshwaranagar,806,3,67,Basaveshwara Nagara,1,PRIMARY_OF_GBA,1.00
+101,Kamakshipalya,544,3,68,Kamakshipalya,1,PRIMARY_OF_GBA,1.00
+102,Vrushabhavathi Nagar,548,3,47,Vrishabhavathi Nagar,1,PRIMARY_OF_GBA,0.89
+103,Kaveripura,812,3,72,Kaveripura,1,PRIMARY_OF_GBA,1.00
+104,Govindrajnagara,647,3,69,Agrahara Dasarahalli,1,AC_ONLY,0.00
+104,Govindrajnagara,647,3,70,Dr Rajkumar Ward,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,71,Thimmenahalli,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,72,Kaveripura,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,73,Dr. Vishnuvardhan Ward,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,74,Pattegar Palya,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,75,Marenahalli West,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,76,Moodalapalya,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,77,Maruthi Mandira Ward,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,78,Anubhava Nagara,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,79,Nagarbhavi,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,80,Chandra Layout,0,AC_ONLY,0.00
+104,Govindrajnagara,647,3,81,Nayanda Halli,0,AC_ONLY,0.00
+105,Agrahara Dasarahalli,578,3,69,Agrahara Dasarahalli,1,PRIMARY_OF_GBA,1.00
+106,Dr. Rajkumar Ward,1282,3,70,Dr Rajkumar Ward,1,PRIMARY_OF_GBA,1.00
+106,Dr. Rajkumar Ward,1282,3,80,Chandra Layout,0,PRIMARY_OF_GBA,0.19
+106,Dr. Rajkumar Ward,1282,3,73,Dr. Vishnuvardhan Ward,0,PRIMARY_OF_GBA,0.17
+106,Dr. Rajkumar Ward,1282,3,74,Pattegar Palya,0,PRIMARY_OF_GBA,0.10
+106,Dr. Rajkumar Ward,1282,3,78,Anubhava Nagara,0,PRIMARY_OF_GBA,0.10
+106,Dr. Rajkumar Ward,1282,3,71,Thimmenahalli,0,PRIMARY_OF_GBA,0.00
+107,Shivanagar,831,3,64,Shivanagara,1,PRIMARY_OF_GBA,1.00
+108,Srirammandira ward,1277,3,58,Dayanand Nagara,1,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,59,Bandi Reddy Circle Ward,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,60,Prakash Nagara,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,61,Da.Ra. Bendre Ward,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,62,Rama Mandira,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,63,Rajajinagara,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,64,Shivanagara,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,65,Manjunath Nagara,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,66,Sane Guruvana Halli,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,67,Basaveshwara Nagara,0,AC_ONLY,0.00
+108,Srirammandira ward,1277,3,68,Kamakshipalya,0,AC_ONLY,0.00
+109,Chikpet,1497,5,54,Binnypete,1,AC_ONLY,0.00
+109,Chikpet,1497,5,55,Bhuvaneshwari Nagar,0,AC_ONLY,0.00
+109,Chikpet,1497,5,56,Gopalpura,0,AC_ONLY,0.00
+109,Chikpet,1497,5,57,Cottonpete,0,AC_ONLY,0.00
+109,Chikpet,1497,5,58,Chickpete,0,AC_ONLY,0.00
+109,Chikpet,1497,5,59,Nehru Nagar,0,AC_ONLY,0.00
+109,Chikpet,1497,5,60,Seshadripuram,0,AC_ONLY,0.00
+109,Chikpet,1497,5,61,Dattatreya Ward,0,AC_ONLY,0.00
+109,Chikpet,1497,5,62,Swatantra Palya Ward,0,AC_ONLY,0.00
+109,Chikpet,1497,5,63,Okalipuram,0,AC_ONLY,0.00
+110,Sampangiramnagar,1722,5,4,Sampangirama Nagar,1,PRIMARY_OF_GBA,0.90
+110,Sampangiramnagar,1722,5,7,K Kamaraj Ward,0,PRIMARY_OF_GBA,0.27
+110,Sampangiramnagar,1722,5,8,Halasuru,0,PRIMARY_OF_GBA,0.00
+111,Shanthala Nagar,4171,5,25,Ashokanagar,1,PRIMARY_OF_GBA,0.52
+111,Shanthala Nagar,4171,5,30,Vinayakanagar,0,PRIMARY_OF_GBA,0.40
+111,Shanthala Nagar,4171,5,27,Ambedkarnagar,0,PRIMARY_OF_GBA,0.32
+111,Shanthala Nagar,4171,5,29,Austin Town,0,PRIMARY_OF_GBA,0.09
+111,Shanthala Nagar,4171,5,22,Domluru,0,PRIMARY_OF_GBA,0.00
+112,Dommalur,1865,5,22,Domluru,1,AC_ONLY,0.00
+112,Dommalur,1865,5,23,Jogpalya,0,AC_ONLY,0.00
+112,Dommalur,1865,5,24,Agaram,0,AC_ONLY,0.00
+112,Dommalur,1865,5,25,Ashokanagar,0,AC_ONLY,0.00
+112,Dommalur,1865,5,26,Vannarpet,0,AC_ONLY,0.00
+112,Dommalur,1865,5,27,Ambedkarnagar,0,AC_ONLY,0.00
+112,Dommalur,1865,5,28,Neelasandra,0,AC_ONLY,0.00
+112,Dommalur,1865,5,29,Austin Town,0,AC_ONLY,0.00
+112,Dommalur,1865,5,30,Vinayakanagar,0,AC_ONLY,0.00
+112,Dommalur,1865,5,31,Shanthinagar,0,AC_ONLY,0.00
+113,Konena Agrahara,804,5,21,Konena Agrahara,1,PRIMARY_OF_GBA,1.00
+114,Agaram,167,5,24,Agaram,1,PRIMARY_OF_GBA,1.00
+115,Vannarpet,595,5,26,Vannarpet,1,PRIMARY_OF_GBA,1.00
+116,Neelasandra,322,5,28,Neelasandra,1,PRIMARY_OF_GBA,1.00
+117,Shanthinagar,1697,5,31,Shanthinagar,1,PRIMARY_OF_GBA,1.00
+118,Sudamnagar,1014,5,32,SilverJubilee Park Ward,1,AC_ONLY,0.00
+118,Sudamnagar,1014,5,33,Dharmaraya Swamy Temple Ward,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,34,D.V Gundappa Ward,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,35,Hombegowda Nagara,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,36,Someshwara Nagara,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,37,BHEL Ward,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,38,Kanakanapalya,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,39,Venkat Reddy Nagara,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,40,Ashoka Pillar,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,41,V.V Puram,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,42,Sunkenahalli,0,AC_ONLY,0.00
+118,Sudamnagar,1014,5,43,Devaraj Urs Ward,0,AC_ONLY,0.00
+119,Dharmarayaswamy Temple Ward,2293,5,33,Dharmaraya Swamy Temple Ward,1,PRIMARY_OF_GBA,1.00
+119,Dharmarayaswamy Temple Ward,2293,5,36,Someshwara Nagara,0,PRIMARY_OF_GBA,0.24
+119,Dharmarayaswamy Temple Ward,2293,5,41,V.V Puram,0,PRIMARY_OF_GBA,0.15
+119,Dharmarayaswamy Temple Ward,2293,5,43,Devaraj Urs Ward,0,PRIMARY_OF_GBA,0.14
+119,Dharmarayaswamy Temple Ward,2293,5,40,Ashoka Pillar,0,PRIMARY_OF_GBA,0.13
+119,Dharmarayaswamy Temple Ward,2293,5,32,SilverJubilee Park Ward,0,PRIMARY_OF_GBA,0.11
+119,Dharmarayaswamy Temple Ward,2293,5,38,Kanakanapalya,0,PRIMARY_OF_GBA,0.06
+119,Dharmarayaswamy Temple Ward,2293,5,35,Hombegowda Nagara,0,PRIMARY_OF_GBA,0.06
+119,Dharmarayaswamy Temple Ward,2293,5,39,Venkat Reddy Nagara,0,PRIMARY_OF_GBA,0.06
+119,Dharmarayaswamy Temple Ward,2293,5,34,D.V Gundappa Ward,0,PRIMARY_OF_GBA,0.00
+119,Dharmarayaswamy Temple Ward,2293,5,37,BHEL Ward,0,PRIMARY_OF_GBA,0.00
+120,Cottonpet,1081,5,57,Cottonpete,1,PRIMARY_OF_GBA,0.94
+121,Binnypet,1409,5,54,Binnypete,1,PRIMARY_OF_GBA,0.93
+122,Kempapura Agrahara,640,3,82,Attigupe,1,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,83,Hampi Nagar,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,84,Hosahalli,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,85,Adi Chunchanagiri Ward,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,86,Vidyaranyanagara,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,87,K.P Agrahara,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,88,Sangolli Rayanna Ward,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,89,Bapuji Nagara,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,90,Krishnadevaraya ward,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,91,Gali Anjaneya Temple Ward,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,92,Muneshwara Block,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,93,Avalahalli,0,AC_ONLY,0.00
+122,Kempapura Agrahara,640,3,94,Deepanjali Nagara,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,82,Attigupe,1,AC_ONLY,0.00
+123,Vijaynagar,1132,3,83,Hampi Nagar,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,84,Hosahalli,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,85,Adi Chunchanagiri Ward,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,86,Vidyaranyanagara,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,87,K.P Agrahara,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,88,Sangolli Rayanna Ward,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,89,Bapuji Nagara,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,90,Krishnadevaraya ward,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,91,Gali Anjaneya Temple Ward,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,92,Muneshwara Block,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,93,Avalahalli,0,AC_ONLY,0.00
+123,Vijaynagar,1132,3,94,Deepanjali Nagara,0,AC_ONLY,0.00
+124,Hosahalli,601,3,84,Hosahalli,1,PRIMARY_OF_GBA,1.00
+125,Marenahalli,606,3,75,Marenahalli West,1,PRIMARY_OF_GBA,0.83
+126,Maruthi Mandira Ward,483,3,77,Maruthi Mandira Ward,1,PRIMARY_OF_GBA,1.00
+127,Moodalapalya,454,3,76,Moodalapalya,1,PRIMARY_OF_GBA,1.00
+128,Nagarabhavi,437,3,79,Nagarbhavi,1,PRIMARY_OF_GBA,0.84
+129,Jnanabharathi ward,2162,3,24,Jnana Bharathi Ward,1,PRIMARY_OF_GBA,1.00
+130,Ullalu,1436,3,16,Ullal,1,PRIMARY_OF_GBA,0.89
+131,Nayandanahalli,754,3,81,Nayanda Halli,1,PRIMARY_OF_GBA,0.92
+132,Attiguppe,865,3,82,Attigupe,1,PRIMARY_OF_GBA,0.93
+133,Hampinagar,676,3,83,Hampi Nagar,1,PRIMARY_OF_GBA,1.00
+134,Bapujinagar,685,3,89,Bapuji Nagara,1,PRIMARY_OF_GBA,1.00
+135,Padarayanapura,411,5,52,Padarayanapura,1,PRIMARY_OF_GBA,1.00
+136,Jagareevanram Nagar,838,5,44,Chamarajpet,1,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,45,K.R Market,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,46,Cheluvadi Palya,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,47,IPD Salappa Ward,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,48,Azad Nagar,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,49,Kasturbha Nagar,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,50,JJR Nagara,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,51,Old Guddadahalli,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,52,Padarayanapura,0,AC_ONLY,0.00
+136,Jagareevanram Nagar,838,5,53,Rayapuram,0,AC_ONLY,0.00
+137,Rayapuram,119,5,53,Rayapuram,1,PRIMARY_OF_GBA,1.00
+138,Chalavadipalya,130,5,44,Chamarajpet,1,AC_ONLY,0.00
+138,Chalavadipalya,130,5,45,K.R Market,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,46,Cheluvadi Palya,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,47,IPD Salappa Ward,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,48,Azad Nagar,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,49,Kasturbha Nagar,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,50,JJR Nagara,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,51,Old Guddadahalli,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,52,Padarayanapura,0,AC_ONLY,0.00
+138,Chalavadipalya,130,5,53,Rayapuram,0,AC_ONLY,0.00
+139,K.R. Market,1512,5,45,K.R Market,1,PRIMARY_OF_GBA,1.00
+139,K.R. Market,1512,5,50,JJR Nagara,0,PRIMARY_OF_GBA,0.14
+139,K.R. Market,1512,5,49,Kasturbha Nagar,0,PRIMARY_OF_GBA,0.10
+139,K.R. Market,1512,5,46,Cheluvadi Palya,0,PRIMARY_OF_GBA,0.00
+139,K.R. Market,1512,5,47,IPD Salappa Ward,0,PRIMARY_OF_GBA,0.00
+139,K.R. Market,1512,5,51,Old Guddadahalli,0,PRIMARY_OF_GBA,0.00
+140,Chamrajpet,1082,5,44,Chamarajpet,1,PRIMARY_OF_GBA,0.84
+141,Azadnagar,1222,5,48,Azad Nagar,1,PRIMARY_OF_GBA,1.00
+142,Sunkenahalli,861,5,42,Sunkenahalli,1,PRIMARY_OF_GBA,1.00
+143,Vishweshrapuram,811,5,32,SilverJubilee Park Ward,1,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,33,Dharmaraya Swamy Temple Ward,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,34,D.V Gundappa Ward,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,35,Hombegowda Nagara,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,36,Someshwara Nagara,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,37,BHEL Ward,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,38,Kanakanapalya,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,39,Venkat Reddy Nagara,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,40,Ashoka Pillar,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,41,V.V Puram,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,42,Sunkenahalli,0,AC_ONLY,0.00
+143,Vishweshrapuram,811,5,43,Devaraj Urs Ward,0,AC_ONLY,0.00
+144,Siddapura,400,5,32,SilverJubilee Park Ward,1,AC_ONLY,0.00
+144,Siddapura,400,5,33,Dharmaraya Swamy Temple Ward,0,AC_ONLY,0.00
+144,Siddapura,400,5,34,D.V Gundappa Ward,0,AC_ONLY,0.00
+144,Siddapura,400,5,35,Hombegowda Nagara,0,AC_ONLY,0.00
+144,Siddapura,400,5,36,Someshwara Nagara,0,AC_ONLY,0.00
+144,Siddapura,400,5,37,BHEL Ward,0,AC_ONLY,0.00
+144,Siddapura,400,5,38,Kanakanapalya,0,AC_ONLY,0.00
+144,Siddapura,400,5,39,Venkat Reddy Nagara,0,AC_ONLY,0.00
+144,Siddapura,400,5,40,Ashoka Pillar,0,AC_ONLY,0.00
+144,Siddapura,400,5,41,V.V Puram,0,AC_ONLY,0.00
+144,Siddapura,400,5,42,Sunkenahalli,0,AC_ONLY,0.00
+144,Siddapura,400,5,43,Devaraj Urs Ward,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,33,Naganathapura,1,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,34,Chikkathoguru,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,35,Vishwapriya Nagara,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,36,Beguru,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,37,Yelenahalli,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,38,Doddakammanahalli,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,39,Gottigere,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,40,Anjanapura,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,41,Kothanur,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,42,RBI Layout,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,43,Bheereshwara Nagar,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,44,Harinagar,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,45,Konanakunte,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,46,Yelachenahalli,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,47,Chandranagara,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,48,Vasanthapura,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,49,Uttarahalli,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,50,Sarvabhouma Nagar,0,AC_ONLY,0.00
+145,Updated Ward Name,1428,2,51,Subramanyapura,0,AC_ONLY,0.00
+146,Lakkasandra,1183,2,23,Lakkasandra,1,PRIMARY_OF_GBA,1.00
+146,Lakkasandra,1183,2,30,Jakkasandra,0,PRIMARY_OF_GBA,0.90
+147,Adugodi,711,2,24,A Adugodi,1,PRIMARY_OF_GBA,0.92
+148,Ejipura,1210,2,26,Ejipura,1,PRIMARY_OF_GBA,1.00
+149,Varthur,2432,1,40,Varthur,1,PRIMARY_OF_GBA,1.00
+150,Bellandur,5299,1,47,Bellanduru,1,PRIMARY_OF_GBA,0.94
+150,Bellandur,5299,1,30,Belathur,0,PRIMARY_OF_GBA,0.53
+150,Bellandur,5299,1,37,Kundalahalli,0,PRIMARY_OF_GBA,0.32
+150,Bellandur,5299,1,49,Doddakannelli Ward,0,PRIMARY_OF_GBA,0.30
+150,Bellandur,5299,1,39,Hagaduru,0,PRIMARY_OF_GBA,0.27
+150,Bellandur,5299,1,48,Panathur,0,PRIMARY_OF_GBA,0.27
+150,Bellandur,5299,1,32,Channasandra,0,PRIMARY_OF_GBA,0.21
+150,Bellandur,5299,2,31,Kasavanahalli,0,PRIMARY_OF_GBA,0.20
+150,Bellandur,5299,1,50,Gunjur,0,PRIMARY_OF_GBA,0.15
+150,Bellandur,5299,1,46,Yamalur,0,PRIMARY_OF_GBA,0.14
+150,Bellandur,5299,1,38,Whitefield,0,PRIMARY_OF_GBA,0.12
+150,Bellandur,5299,1,41,Munnenkolalu,0,PRIMARY_OF_GBA,0.11
+150,Bellandur,5299,1,28,Byrathi,0,PRIMARY_OF_GBA,0.00
+150,Bellandur,5299,1,33,S.M Krishna Ward,0,PRIMARY_OF_GBA,0.00
+150,Bellandur,5299,1,34,Kaveri Nagara,0,PRIMARY_OF_GBA,0.00
+150,Bellandur,5299,1,36,Bharath Aikya Ward,0,PRIMARY_OF_GBA,0.00
+150,Bellandur,5299,1,42,Priyadarshini Ward,0,PRIMARY_OF_GBA,0.00
+150,Bellandur,5299,1,44,Ashwath Nagar,0,PRIMARY_OF_GBA,0.00
+151,Koramangala,3314,2,28,Kormangala East,1,PRIMARY_OF_GBA,0.70
+151,Koramangala,3314,2,29,Kormangala West,0,PRIMARY_OF_GBA,0.70
+151,Koramangala,3314,2,25,National Games Village,0,PRIMARY_OF_GBA,0.28
+151,Koramangala,3314,2,18,Viswamanava Kuvempu Ward,0,PRIMARY_OF_GBA,0.22
+151,Koramangala,3314,2,17,N.S Palya,0,PRIMARY_OF_GBA,0.13
+151,Koramangala,3314,2,22,S.G Palya,0,PRIMARY_OF_GBA,0.13
+151,Koramangala,3314,2,27,Sri Lakshmi Devi Ward,0,PRIMARY_OF_GBA,0.09
+151,Koramangala,3314,2,19,Tavarekere,0,PRIMARY_OF_GBA,0.00
+151,Koramangala,3314,2,21,Chikka Adugodi,0,PRIMARY_OF_GBA,0.00
+152,Sudduguntepalya,1508,2,17,N.S Palya,1,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,18,Viswamanava Kuvempu Ward,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,19,Tavarekere,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,20,Madiwala,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,21,Chikka Adugodi,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,22,S.G Palya,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,23,Lakkasandra,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,24,A Adugodi,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,25,National Games Village,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,26,Ejipura,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,27,Sri Lakshmi Devi Ward,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,28,Kormangala East,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,29,Kormangala West,0,AC_ONLY,0.00
+152,Sudduguntepalya,1508,2,30,Jakkasandra,0,AC_ONLY,0.00
+153,Jayangar,608,5,32,SilverJubilee Park Ward,1,AC_ONLY,0.00
+153,Jayangar,608,5,33,Dharmaraya Swamy Temple Ward,0,AC_ONLY,0.00
+153,Jayangar,608,5,34,D.V Gundappa Ward,0,AC_ONLY,0.00
+153,Jayangar,608,5,35,Hombegowda Nagara,0,AC_ONLY,0.00
+153,Jayangar,608,5,36,Someshwara Nagara,0,AC_ONLY,0.00
+153,Jayangar,608,5,37,BHEL Ward,0,AC_ONLY,0.00
+153,Jayangar,608,5,38,Kanakanapalya,0,AC_ONLY,0.00
+153,Jayangar,608,5,39,Venkat Reddy Nagara,0,AC_ONLY,0.00
+153,Jayangar,608,5,40,Ashoka Pillar,0,AC_ONLY,0.00
+153,Jayangar,608,5,41,V.V Puram,0,AC_ONLY,0.00
+153,Jayangar,608,5,42,Sunkenahalli,0,AC_ONLY,0.00
+153,Jayangar,608,5,43,Devaraj Urs Ward,0,AC_ONLY,0.00
+154,Basavanagudi,805,3,97,Srinivasa Nagara,1,PRIMARY_OF_GBA,0.50
+154,Basavanagudi,805,3,98,Ashoka Nagara,0,PRIMARY_OF_GBA,0.38
+154,Basavanagudi,805,3,99,T.R Shamanna Nagar,0,PRIMARY_OF_GBA,0.24
+154,Basavanagudi,805,3,104,Thyagarajnagar,0,PRIMARY_OF_GBA,0.17
+154,Basavanagudi,805,3,95,Swamy Vivekananda Ward,0,PRIMARY_OF_GBA,0.15
+154,Basavanagudi,805,3,101,Kempambudhi Ward,0,PRIMARY_OF_GBA,0.10
+154,Basavanagudi,805,3,103,N.R Colony,0,PRIMARY_OF_GBA,0.00
+155,Hanumanthanagar,488,3,102,Hanumanthanagar,1,PRIMARY_OF_GBA,1.00
+156,Srinagar,611,3,100,Srinagar,1,PRIMARY_OF_GBA,1.00
+157,Gali Anjaneya swamy Temple Ward,1323,3,91,Gali Anjaneya Temple Ward,1,PRIMARY_OF_GBA,0.82
+157,Gali Anjaneya swamy Temple Ward,1323,3,86,Vidyaranyanagara,0,PRIMARY_OF_GBA,0.22
+157,Gali Anjaneya swamy Temple Ward,1323,3,88,Sangolli Rayanna Ward,0,PRIMARY_OF_GBA,0.22
+157,Gali Anjaneya swamy Temple Ward,1323,3,93,Avalahalli,0,PRIMARY_OF_GBA,0.13
+157,Gali Anjaneya swamy Temple Ward,1323,3,92,Muneshwara Block,0,PRIMARY_OF_GBA,0.11
+157,Gali Anjaneya swamy Temple Ward,1323,3,90,Krishnadevaraya ward,0,PRIMARY_OF_GBA,0.06
+157,Gali Anjaneya swamy Temple Ward,1323,3,85,Adi Chunchanagiri Ward,0,PRIMARY_OF_GBA,0.05
+157,Gali Anjaneya swamy Temple Ward,1323,3,87,K.P Agrahara,0,PRIMARY_OF_GBA,0.00
+158,Deepanjali Nagar,1098,3,94,Deepanjali Nagara,1,PRIMARY_OF_GBA,1.00
+159,Kengeri,1902,3,21,Kengeri,1,PRIMARY_OF_GBA,1.00
+160,Rajarajeshwarinagar,3835,3,23,Rajarajeshwari Nagara,1,PRIMARY_OF_GBA,1.00
+160,Rajarajeshwarinagar,3835,3,29,Chowdeshwari Nagar,0,PRIMARY_OF_GBA,0.65
+160,Rajarajeshwarinagar,3835,3,22,Bangarappa Nagara,0,PRIMARY_OF_GBA,0.38
+160,Rajarajeshwarinagar,3835,4,62,Brundavana Nagara,0,PRIMARY_OF_GBA,0.25
+160,Rajarajeshwarinagar,3835,3,25,Vinayaka Layout,0,PRIMARY_OF_GBA,0.13
+160,Rajarajeshwarinagar,3835,3,35,Goraguntepalya,0,PRIMARY_OF_GBA,0.13
+160,Rajarajeshwarinagar,3835,3,27,Srigandada Kaval,0,PRIMARY_OF_GBA,0.13
+160,Rajarajeshwarinagar,3835,3,26,Mallathahalli,0,PRIMARY_OF_GBA,0.00
+160,Rajarajeshwarinagar,3835,3,30,Kempegowda Layout,0,PRIMARY_OF_GBA,0.00
+160,Rajarajeshwarinagar,3835,3,31,Freedom Fighter Ward,0,PRIMARY_OF_GBA,0.00
+160,Rajarajeshwarinagar,3835,3,34,Peenya,0,PRIMARY_OF_GBA,0.00
+161,Hosakerehalli,363,3,112,Hosakerehalli,1,PRIMARY_OF_GBA,1.00
+162,Girinagar,691,3,100,Srinagar,1,PRIMARY_OF_GBA,0.80
+163,Katriguppe,667,3,96,Kathriguppe,1,PRIMARY_OF_GBA,0.84
+164,Vidyapeetha Ward,663,3,95,Swamy Vivekananda Ward,1,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,96,Kathriguppe,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,97,Srinivasa Nagara,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,98,Ashoka Nagara,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,99,T.R Shamanna Nagar,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,100,Srinagar,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,101,Kempambudhi Ward,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,102,Hanumanthanagar,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,103,N.R Colony,0,AC_ONLY,0.00
+164,Vidyapeetha Ward,663,3,104,Thyagarajnagar,0,AC_ONLY,0.00
+165,Ganeshmandira Ward,1013,3,108,Ganesh Mandira Ward,1,PRIMARY_OF_GBA,1.00
+165,Ganeshmandira Ward,1013,2,5,Kane Muneshwara Ward,0,PRIMARY_OF_GBA,0.40
+165,Ganeshmandira Ward,1013,2,3,Yarab nagar,0,PRIMARY_OF_GBA,0.19
+165,Ganeshmandira Ward,1013,3,107,Dharmagiri Ward,0,PRIMARY_OF_GBA,0.19
+165,Ganeshmandira Ward,1013,2,2,Kadirenahalli,0,PRIMARY_OF_GBA,0.17
+165,Ganeshmandira Ward,1013,3,105,Yediyuru,0,PRIMARY_OF_GBA,0.11
+165,Ganeshmandira Ward,1013,3,111,Ittamadu,0,PRIMARY_OF_GBA,0.11
+165,Ganeshmandira Ward,1013,2,6,Gowdanapalya,0,PRIMARY_OF_GBA,0.09
+165,Ganeshmandira Ward,1013,3,109,Kamakya Layout,0,PRIMARY_OF_GBA,0.08
+165,Ganeshmandira Ward,1013,3,106,Devagiri Temple Ward,0,PRIMARY_OF_GBA,0.08
+166,Karisandra,632,2,1,Padmanabhanagara,1,AC_ONLY,0.00
+166,Karisandra,632,2,2,Kadirenahalli,0,AC_ONLY,0.00
+166,Karisandra,632,2,3,Yarab nagar,0,AC_ONLY,0.00
+166,Karisandra,632,2,4,Banashankari Temple Ward,0,AC_ONLY,0.00
+166,Karisandra,632,2,5,Kane Muneshwara Ward,0,AC_ONLY,0.00
+166,Karisandra,632,2,6,Gowdanapalya,0,AC_ONLY,0.00
+166,Karisandra,632,3,105,Yediyuru,0,AC_ONLY,0.00
+166,Karisandra,632,3,106,Devagiri Temple Ward,0,AC_ONLY,0.00
+166,Karisandra,632,3,107,Dharmagiri Ward,0,AC_ONLY,0.00
+166,Karisandra,632,3,108,Ganesh Mandira Ward,0,AC_ONLY,0.00
+166,Karisandra,632,3,109,Kamakya Layout,0,AC_ONLY,0.00
+166,Karisandra,632,3,110,Chikkalasandra,0,AC_ONLY,0.00
+166,Karisandra,632,3,111,Ittamadu,0,AC_ONLY,0.00
+166,Karisandra,632,3,112,Hosakerehalli,0,AC_ONLY,0.00
+167,Yadiyuru,744,2,1,Padmanabhanagara,1,AC_ONLY,0.00
+167,Yadiyuru,744,2,2,Kadirenahalli,0,AC_ONLY,0.00
+167,Yadiyuru,744,2,3,Yarab nagar,0,AC_ONLY,0.00
+167,Yadiyuru,744,2,4,Banashankari Temple Ward,0,AC_ONLY,0.00
+167,Yadiyuru,744,2,5,Kane Muneshwara Ward,0,AC_ONLY,0.00
+167,Yadiyuru,744,2,6,Gowdanapalya,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,105,Yediyuru,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,106,Devagiri Temple Ward,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,107,Dharmagiri Ward,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,108,Ganesh Mandira Ward,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,109,Kamakya Layout,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,110,Chikkalasandra,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,111,Ittamadu,0,AC_ONLY,0.00
+167,Yadiyuru,744,3,112,Hosakerehalli,0,AC_ONLY,0.00
+168,Pattabhiramnagar,1408,2,12,Pattabhirama Nagara,1,PRIMARY_OF_GBA,0.90
+168,Pattabhiramnagar,1408,2,10,Abdul Kalam Nagar,0,PRIMARY_OF_GBA,0.48
+168,Pattabhiramnagar,1408,2,8,Tilak Nagara,0,PRIMARY_OF_GBA,0.33
+168,Pattabhiramnagar,1408,2,13,Marenahalli South,0,PRIMARY_OF_GBA,0.13
+168,Pattabhiramnagar,1408,2,9,N.A.L Layout,0,PRIMARY_OF_GBA,0.09
+169,Byrasandra,1033,2,7,Byrasandra,1,PRIMARY_OF_GBA,1.00
+170,Jayanagar East,892,2,11,Jayanagar East,1,PRIMARY_OF_GBA,1.00
+171,Gurappanapalya,510,2,7,Byrasandra,1,AC_ONLY,0.00
+171,Gurappanapalya,510,2,8,Tilak Nagara,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,9,N.A.L Layout,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,10,Abdul Kalam Nagar,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,11,Jayanagar East,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,12,Pattabhirama Nagara,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,13,Marenahalli South,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,14,J.P Nagar,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,15,Shakambarinagara,0,AC_ONLY,0.00
+171,Gurappanapalya,510,2,16,Sarakki,0,AC_ONLY,0.00
+172,Madiwala,1326,2,20,Madiwala,1,PRIMARY_OF_GBA,1.00
+173,Jakkasandra,409,2,30,Jakkasandra,1,PRIMARY_OF_GBA,1.00
+173,Jakkasandra,409,2,23,Lakkasandra,0,PRIMARY_OF_GBA,0.90
+174,HSR Layout,3545,2,72,HSR Layout,1,PRIMARY_OF_GBA,1.00
+174,HSR Layout,3545,2,59,Vijaya Bank Layout,0,PRIMARY_OF_GBA,0.43
+174,HSR Layout,3545,2,54,Kengal Hanumanthaiah South,0,PRIMARY_OF_GBA,0.19
+174,HSR Layout,3545,2,56,Doresanipalya,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,57,Hulimavu,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,61,Kodi Chikkanahalli,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,62,Devarachikkanahalli,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,65,Garvebavi Palya,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,67,Bandepalya,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,69,Hosapalya,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,70,Iblur,0,PRIMARY_OF_GBA,0.00
+174,HSR Layout,3545,2,71,Agara,0,PRIMARY_OF_GBA,0.00
+175,Bommanahalli,1284,2,63,Bommanahalli,1,PRIMARY_OF_GBA,1.00
+176,BTM Layout,1908,2,17,N.S Palya,1,AC_ONLY,0.00
+176,BTM Layout,1908,2,18,Viswamanava Kuvempu Ward,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,19,Tavarekere,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,20,Madiwala,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,21,Chikka Adugodi,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,22,S.G Palya,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,23,Lakkasandra,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,24,A Adugodi,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,25,National Games Village,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,26,Ejipura,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,27,Sri Lakshmi Devi Ward,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,28,Kormangala East,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,29,Kormangala West,0,AC_ONLY,0.00
+176,BTM Layout,1908,2,30,Jakkasandra,0,AC_ONLY,0.00
+177,J.P.Nagar,1217,2,14,J.P Nagar,1,PRIMARY_OF_GBA,1.00
+178,Sarakki,725,2,16,Sarakki,1,PRIMARY_OF_GBA,1.00
+179,Shakambarinagar,673,2,15,Shakambarinagara,1,PRIMARY_OF_GBA,1.00
+180,Banashankari Temple Ward,340,2,4,Banashankari Temple Ward,1,PRIMARY_OF_GBA,1.00
+181,Kumaraswamy Layout,832,2,1,Padmanabhanagara,1,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,2,2,Kadirenahalli,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,2,3,Yarab nagar,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,2,4,Banashankari Temple Ward,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,2,5,Kane Muneshwara Ward,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,2,6,Gowdanapalya,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,105,Yediyuru,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,106,Devagiri Temple Ward,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,107,Dharmagiri Ward,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,108,Ganesh Mandira Ward,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,109,Kamakya Layout,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,110,Chikkalasandra,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,111,Ittamadu,0,AC_ONLY,0.00
+181,Kumaraswamy Layout,832,3,112,Hosakerehalli,0,AC_ONLY,0.00
+182,Padmanabhanagar,604,2,1,Padmanabhanagara,1,PRIMARY_OF_GBA,1.00
+183,Chikkallasandra,468,3,110,Chikkalasandra,1,PRIMARY_OF_GBA,0.96
+184,Uttarahalli,927,2,49,Uttarahalli,1,PRIMARY_OF_GBA,1.00
+185,Yelachenahalli,664,2,46,Yelachenahalli,1,PRIMARY_OF_GBA,1.00
+186,Jaraganahalli,362,2,53,Jaraganahalli,1,PRIMARY_OF_GBA,1.00
+187,Puttenahalli,1305,2,55,Puttenahalli,1,PRIMARY_OF_GBA,1.00
+188,Bilekahalli,1188,2,60,Bilekahalli,1,PRIMARY_OF_GBA,1.00
+189,Hongasandra,959,2,64,Hongasandra,1,PRIMARY_OF_GBA,1.00
+189,Hongasandra,959,2,66,Singasandra,0,PRIMARY_OF_GBA,0.80
+190,Mangammanapalya,651,2,68,Mangammana Palya,1,PRIMARY_OF_GBA,1.00
+191,Singasandra,1344,2,33,Naganathapura,1,AC_ONLY,0.00
+191,Singasandra,1344,2,34,Chikkathoguru,0,AC_ONLY,0.00
+191,Singasandra,1344,2,35,Vishwapriya Nagara,0,AC_ONLY,0.00
+191,Singasandra,1344,2,36,Beguru,0,AC_ONLY,0.00
+191,Singasandra,1344,2,37,Yelenahalli,0,AC_ONLY,0.00
+191,Singasandra,1344,2,38,Doddakammanahalli,0,AC_ONLY,0.00
+191,Singasandra,1344,2,39,Gottigere,0,AC_ONLY,0.00
+191,Singasandra,1344,2,40,Anjanapura,0,AC_ONLY,0.00
+191,Singasandra,1344,2,41,Kothanur,0,AC_ONLY,0.00
+191,Singasandra,1344,2,42,RBI Layout,0,AC_ONLY,0.00
+191,Singasandra,1344,2,43,Bheereshwara Nagar,0,AC_ONLY,0.00
+191,Singasandra,1344,2,44,Harinagar,0,AC_ONLY,0.00
+191,Singasandra,1344,2,45,Konanakunte,0,AC_ONLY,0.00
+191,Singasandra,1344,2,46,Yelachenahalli,0,AC_ONLY,0.00
+191,Singasandra,1344,2,47,Chandranagara,0,AC_ONLY,0.00
+191,Singasandra,1344,2,48,Vasanthapura,0,AC_ONLY,0.00
+191,Singasandra,1344,2,49,Uttarahalli,0,AC_ONLY,0.00
+191,Singasandra,1344,2,50,Sarvabhouma Nagar,0,AC_ONLY,0.00
+191,Singasandra,1344,2,51,Subramanyapura,0,AC_ONLY,0.00
+192,Begur,1510,2,36,Beguru,1,PRIMARY_OF_GBA,0.89
+192,Begur,1510,2,34,Chikkathoguru,0,PRIMARY_OF_GBA,0.25
+192,Begur,1510,2,41,Kothanur,0,PRIMARY_OF_GBA,0.18
+192,Begur,1510,2,33,Naganathapura,0,PRIMARY_OF_GBA,0.13
+192,Begur,1510,2,51,Subramanyapura,0,PRIMARY_OF_GBA,0.12
+192,Begur,1510,2,35,Vishwapriya Nagara,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,37,Yelenahalli,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,38,Doddakammanahalli,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,42,RBI Layout,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,43,Bheereshwara Nagar,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,44,Harinagar,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,47,Chandranagara,0,PRIMARY_OF_GBA,0.00
+192,Begur,1510,2,50,Sarvabhouma Nagar,0,PRIMARY_OF_GBA,0.00
+193,Arakere,1391,2,58,Arakere,1,PRIMARY_OF_GBA,1.00
+194,Gottigere,1380,2,39,Gottigere,1,PRIMARY_OF_GBA,1.00
+195,Konanakunte,1184,2,45,Konanakunte,1,PRIMARY_OF_GBA,1.00
+196,Anjanapura,668,2,40,Anjanapura,1,PRIMARY_OF_GBA,1.00
+197,Vasanthapura,1003,2,48,Vasanthapura,1,PRIMARY_OF_GBA,1.00
+198,Hemmigepura,2103,2,52,Talagattapura,1,AC_ONLY,0.00
+198,Hemmigepura,2103,3,11,Dodda Bidarakallu,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,12,Andrahalli,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,13,Nada prabhu Kempegowda Nagara,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,14,Herohalli,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,15,Byadarahalli,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,16,Ullal,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,17,Nagadevanahalli,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,18,Kengal Hanumanthaiah West,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,19,Shivanapalya,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,20,Kengeri Kote ward,0,AC_ONLY,0.00
+198,Hemmigepura,2103,3,21,Kengeri,0,AC_ONLY,0.00

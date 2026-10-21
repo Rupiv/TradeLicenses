@@ -39,6 +39,7 @@ namespace TradeLicence.API.Controllers
      int? wardId,
      int? licenceApplicationId,
      string? applicationNumber,
+     int? corporationId,
      int pageNumber = 1,
      int pageSize = 10)
         {
@@ -61,6 +62,9 @@ namespace TradeLicence.API.Controllers
             parameters.Add("@WardID", wardId);
             parameters.Add("@LicenceApplicationID", licenceApplicationId);
             parameters.Add("@ApplicationNumber", applicationNumber);
+            // Only sent when used: the parameter exists once GBA_StoredProcedure_Updates.sql has run
+            if (corporationId != null)
+                parameters.Add("@CorporationID", corporationId);
 
             parameters.Add("@PageNumber", pageNumber);
             parameters.Add("@PageSize", pageSize);
@@ -95,7 +99,8 @@ namespace TradeLicence.API.Controllers
         public async Task<IActionResult> GetDashboard(
     int? zoneId,
     int? mohId,
-    int? wardId)
+    int? wardId,
+    int? corporationId)
         {
             using var con = Db();
 
@@ -106,6 +111,8 @@ namespace TradeLicence.API.Controllers
             parameters.Add("@ZoneID", zoneId);
             parameters.Add("@MohID", mohId);
             parameters.Add("@WardID", wardId);
+            if (corporationId != null)
+                parameters.Add("@CorporationID", corporationId);
 
             parameters.Add("@TotalCount",
                 dbType: DbType.Int32,
