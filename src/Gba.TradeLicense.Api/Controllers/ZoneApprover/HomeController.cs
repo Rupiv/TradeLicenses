@@ -154,5 +154,69 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
             });
         }
 
+
+        // ======================================================
+        // ZONE APPROVER – LOOKUP (ZONE + WARD)
+        // ======================================================
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetLookup(int loginId)
+        {
+            // GBA-assigned officer: only the assigned GBA zone(s) and ward(s)
+            if (await _gbaQueue.HasAssignmentAsync(loginId))
+            {
+                var (gbaZones, gbaWards) = await _gbaQueue.GetLookupAsync(loginId);
+                return Ok(new
+                {
+                    Role = "ZoneApprover",
+                    Mode = "LOOKUP",
+                    Scope = "GBA",
+                    LoginID = loginId,
+                    Zones = gbaZones,
+                    Wards = gbaWards
+                });
+            }
+
+            // Non-GBA officer: same zone the LIST/DASHBOARD queries scope to (Login_Master ->
+            // Master_OfficeDetails -> moh). sp_GetTradeLicenceApplications_ZoneApprover has no
+            // LOOKUP action, so this is resolved directly instead of touching that procedure.
+            using var con = Db();
+
+            var zoneCode = await con.QueryFirstOrDefaultAsync<int?>(
+                @"SELECT TOP 1 m.majzonecd
+                  FROM Login_Master lm
+                  INNER JOIN Master_OfficeDetails od ON lm.officeDetailsID = od.officeDetailsID
+                  INNER JOIN moh m ON LTRIM(RTRIM(od.officeName)) = LTRIM(RTRIM(m.mohname))
+                  WHERE lm.loginID = @loginId",
+                new { loginId });
+
+            if (zoneCode is null)
+            {
+                return Ok(new
+                {
+                    Role = "ZoneApprover",
+                    Mode = "LOOKUP",
+                    LoginID = loginId,
+                    Zones = Array.Empty<object>(),
+                    Wards = Array.Empty<object>()
+                });
+            }
+
+            var zones = await con.QueryAsync(
+                "SELECT z.zoneID AS ZoneID, z.zoneName AS ZoneName FROM Master_BBMPZone z WHERE z.zoneID = @zoneCode",
+                new { zoneCode });
+            var wards = await con.QueryAsync(
+                "SELECT w.wardID AS WardID, w.wardName AS WardName FROM Master_BBMPWard w WHERE w.zoneID = @zoneCode ORDER BY w.wardName",
+                new { zoneCode });
+
+            return Ok(new
+            {
+                Role = "ZoneApprover",
+                Mode = "LOOKUP",
+                LoginID = loginId,
+                Zones = zones,
+                Wards = wards
+            });
+        }
+
     }
 }
