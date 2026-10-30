@@ -202,8 +202,8 @@ public class TradeLicenceController : ControllerBase
             if (!finals.TryGetValue(app.LicenceApplicationID, out var f)) continue;
             if (!string.IsNullOrWhiteSpace(f.Status)) app.ApplicationStatus = f.Status.Trim();
             if (!string.IsNullOrWhiteSpace(f.AppNo)) app.ApplicationNumber = f.AppNo;
-            if (string.IsNullOrWhiteSpace(app.ApplicantName) && !string.IsNullOrWhiteSpace(f.ApplicantName)) app.ApplicantName = f.ApplicantName;
-            if (string.IsNullOrWhiteSpace(app.TradeName) && !string.IsNullOrWhiteSpace(f.TradeName)) app.TradeName = f.TradeName;
+            if (!string.IsNullOrWhiteSpace(f.ApplicantName)) app.ApplicantName = f.ApplicantName;
+            if (!string.IsNullOrWhiteSpace(f.TradeName)) app.TradeName = f.TradeName;
             if (app.TradeLicenceID == 0 && f.TradeLicenceId is int tl) app.TradeLicenceID = tl;
         }
 
