@@ -110,17 +110,22 @@ public class TradeLicenceController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        if (!data.Any())
-            return NotFound("No applications found");
+        // Fetch the account directly instead of relying on the SP's result (which only returns a
+        // row when the user already has at least one linked application) - a brand new trader with
+        // zero applications must still get a 200 with an empty list, not a 404.
+        var me = await con.QueryFirstOrDefaultAsync<(int UserID, string FullName, string MobileNumber, string EmailID)>(
+            "SELECT UserID, FullName, MobileNumber, EmailID FROM dbo.User_Login WHERE UserID = @userId",
+            new { userId });
 
-        var firstRow = data.First();
+        if (me.UserID == 0)
+            return NotFound("User not found");
 
         var user = new UserApplicationResponse
         {
-            UserId = userId,
-            FullName = firstRow.FullName,
-            MobileNumber = firstRow.UserMobile,
-            EmailId = firstRow.UserEmail
+            UserId = me.UserID,
+            FullName = me.FullName,
+            MobileNumber = me.MobileNumber,
+            EmailId = me.EmailID
         };
 
         var groupedApplications = data
@@ -165,9 +170,91 @@ public class TradeLicenceController : ControllerBase
             user.Applications.Add(application);
         }
 
+        // Legacy bulk-migrated applications were saved with loginID = -1 (never linked to any real
+        // trader account) instead of this user's loginID. Surface them by matching the applicant's
+        // mobile number against this user's registered mobile number, so a trader who signs up with
+        // their old number can still see their historical applications. Read-only: nothing here is
+        // written back, so a false match (an old number since reassigned) only affects this view.
+        if (!string.IsNullOrWhiteSpace(me.MobileNumber))
+        {
+            var existingIds = user.Applications.Select(a => a.LicenceApplicationID).ToHashSet();
+
+            var orphaned = await con.QueryAsync<dynamic>(
+                @"SELECT lat.licenceApplicationID, lat.applicationNumber, lat.applicationSubmitDate,
+                         lat.licenceFromDate, lat.licenceToDate, las.licenceApplicationStatusName,
+                         lcs.statusDecription AS CurrentStatusDescription,
+                         lmt.tradeLicenceID, lmt.applicantName, lmt.tradeName
+                  FROM dbo.Licence_Application_Temp lat
+                  INNER JOIN dbo.Licence_Master_Temp lmt ON lmt.tradeLicenceID = lat.tradeLicenceID
+                  LEFT JOIN dbo.Licence_ApplicationStatus las ON las.licenceApplicationStatusID = lat.licenceApplicationStatusID
+                  LEFT JOIN dbo.Licence_CurrentStatus lcs ON lcs.licenceCurrentStatusID = lat.currentStatus
+                  WHERE lat.loginID = -1 AND lmt.mobileNumber = @mobile",
+                new { mobile = me.MobileNumber });
+
+            foreach (var row in orphaned)
+            {
+                int id = Convert.ToInt32(row.licenceApplicationID);
+                if (!existingIds.Add(id)) continue;
+
+                user.Applications.Add(new ApplicationDto
+                {
+                    LicenceApplicationID = id,
+                    ApplicationNumber = row.applicationNumber,
+                    ApplicationSubmitDate = row.applicationSubmitDate,
+                    LicenceFromDate = row.licenceFromDate,
+                    LicenceToDate = row.licenceToDate,
+                    ApplicationStatus = row.licenceApplicationStatusName,
+                    CurrentStatus = row.CurrentStatusDescription,
+                    TradeLicenceID = Convert.ToInt32(row.tradeLicenceID),
+                    ApplicantName = row.applicantName,
+                    TradeName = row.tradeName
+                });
+            }
+
+            // Some legacy applications never had a Licence_Application_Temp row at all - they exist
+            // only in the final tables and are unlinked there too (loginID = -1). Same mobile match.
+            var orphanedFinal = await con.QueryAsync<dynamic>(
+                @"SELECT la.licenceApplicationID, la.applicationNumber, la.applicationSubmitDate,
+                         la.licenceFromDate, la.licenceToDate,
+                         COALESCE(mp.licenceProcessName, las.licenceApplicationStatusName) AS StatusName,
+                         lcs.statusDecription AS CurrentStatusDescription,
+                         m.tradeLicenceID, m.applicantName, m.tradeName
+                  FROM dbo.Licence_Application la
+                  LEFT JOIN dbo.Licence_Master m ON m.tradeLicenceID = la.tradeLicenceID
+                  LEFT JOIN dbo.Master_LicenceProcess mp ON mp.licenceProcessID = la.licenceApplicationStatusID
+                  LEFT JOIN dbo.Licence_ApplicationStatus las ON las.licenceApplicationStatusID = la.licenceApplicationStatusID
+                  LEFT JOIN dbo.Licence_CurrentStatus lcs ON lcs.licenceCurrentStatusID = la.currentStatus
+                  WHERE la.loginID = -1 AND m.mobileNumber = @mobile",
+                new { mobile = me.MobileNumber });
+
+            foreach (var row in orphanedFinal)
+            {
+                int id = Convert.ToInt32(row.licenceApplicationID);
+                if (!existingIds.Add(id)) continue;
+
+                user.Applications.Add(new ApplicationDto
+                {
+                    LicenceApplicationID = id,
+                    ApplicationNumber = row.applicationNumber,
+                    ApplicationSubmitDate = row.applicationSubmitDate,
+                    LicenceFromDate = row.licenceFromDate,
+                    LicenceToDate = row.licenceToDate,
+                    ApplicationStatus = row.StatusName,
+                    CurrentStatus = row.CurrentStatusDescription,
+                    TradeLicenceID = row.tradeLicenceID != null ? Convert.ToInt32(row.tradeLicenceID) : 0,
+                    ApplicantName = row.applicantName,
+                    TradeName = row.tradeName
+                });
+            }
+        }
+
+        if (user.Applications.Count == 0)
+            return Ok(user);
+
         // Submitted applications move on in Licence_Application (same tradeLicenceID) while the
         // temp row stays APPLIED -> show the real, current status and application number.
         // (After submission tradeLicenceID points to Licence_Master, so names come from there.)
+        var allIds = user.Applications.Select(a => (long)a.LicenceApplicationID).ToList();
         var finals = (await con.QueryAsync<(long TempId, string? AppNo, string? Status, string? ApplicantName, string? TradeName, int? TradeLicenceId)>(
             @"SELECT t.licenceApplicationID, f.applicationNumber, f.statusName, m.applicantName, m.tradeName, m.tradeLicenceID
               FROM dbo.Licence_Application_Temp t
@@ -181,8 +268,8 @@ public class TradeLicenceController : ControllerBase
                   ORDER BY la.licenceApplicationID DESC
               ) f
               LEFT JOIN dbo.Licence_Master m ON m.tradeLicenceID = t.tradeLicenceID
-              WHERE t.loginID = @userId",
-            new { userId }))
+              WHERE t.licenceApplicationID IN @allIds",
+            new { allIds }))
             .ToDictionary(x => x.TempId);
 
         // Paid (receipt + gateway SUCCESS) but no Licence_Application yet -> "Complete Submission"

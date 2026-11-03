@@ -51,6 +51,26 @@ namespace Gba.TradeLicense.Api.Controllers
             long.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("loginID")?.Value, out var id)
                 ? id : null;
 
+        // Legacy bulk-migrated applications were saved with loginID = -1 (never linked to any real
+        // trader account). The trader dashboard already surfaces these by matching the caller's
+        // registered mobile number (see TradeLicenceController.GetUserApplications) - this view must
+        // accept the same match, or an application the dashboard lists would 403 when opened.
+        private async Task<bool> CanViewAsync(IDbConnection db, long ownerLoginId, long tradeLicenceId, bool isFinal)
+        {
+            if (ownerLoginId == CallerId()) return true;
+            if (ownerLoginId != -1) return false;
+
+            var callerMobile = User.FindFirst("mobile")?.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(callerMobile)) return false;
+
+            var table = isFinal ? "dbo.Licence_Master" : "dbo.Licence_Master_Temp";
+            var mobile = await db.ExecuteScalarAsync<string?>(
+                $"SELECT mobileNumber FROM {table} WHERE tradeLicenceID = @tradeLicenceId",
+                new { tradeLicenceId });
+
+            return !string.IsNullOrWhiteSpace(mobile) && mobile.Trim() == callerMobile;
+        }
+
         private sealed record TempState(long LoginID, long TradeLicenceID, int StatusID, string? ReceiptNumber);
 
         private static Task<TempState?> GetTempAsync(IDbConnection db, long licenceApplicationId) =>
@@ -98,7 +118,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 new { licenceApplicationId });
             if (la == null)
                 return NotFound(new { Message = "Application not found." });
-            if (IsTrader() && la.Value.LoginID != CallerId())
+            if (IsTrader() && !await CanViewAsync(db, la.Value.LoginID, la.Value.TradeLicenceID, isFinal: true))
                 return Forbid();
 
             // Draft of an online application: same licence record and same applicant
@@ -284,8 +304,21 @@ namespace Gba.TradeLicense.Api.Controllers
 
             var temp = await GetTempAsync(db, licenceApplicationId);
             if (temp == null)
-                return NotFound(new { Message = "Application not found." });
-            if (IsTrader() && temp.LoginID != CallerId())
+            {
+                // No draft row at all - legacy/migrated applications can live only in the final
+                // tables (never had a Licence_Application_Temp row). Same place GetSubmitted looks.
+                var fa = await db.QueryFirstOrDefaultAsync<(long LoginID, long TradeLicenceID)?>(
+                    @"SELECT CAST(loginID AS BIGINT), CAST(tradeLicenceID AS BIGINT)
+                      FROM dbo.Licence_Application WHERE licenceApplicationID = @licenceApplicationId",
+                    new { licenceApplicationId });
+                if (fa == null)
+                    return NotFound(new { Message = "Application not found." });
+                if (IsTrader() && !await CanViewAsync(db, fa.Value.LoginID, fa.Value.TradeLicenceID, isFinal: true))
+                    return Forbid();
+
+                return Ok(await BuildSubmittedOnlyViewAsync(db, licenceApplicationId));
+            }
+            if (IsTrader() && !await CanViewAsync(db, temp.LoginID, temp.TradeLicenceID, isFinal: false))
                 return Forbid();
 
             // 1) Existing full-details procedure (header, trades, documents, geo)
