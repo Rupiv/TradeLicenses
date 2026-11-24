@@ -9,9 +9,10 @@ namespace Gba.TradeLicense.Domain.Entities
     public class TradeZonalClassification
     {
         public int ZonalClassificationID { get; set; }
-        public string ZonalCode { get; set; }
+        // Optional: the Master Data screen sends only the name (see BBMPZoneModel)
+        public string? ZonalCode { get; set; }
         public string ZonalClassificationName { get; set; }
-        public string ZonalClassificationNativeName { get; set; }
+        public string? ZonalClassificationNativeName { get; set; }
         public bool IsActive { get; set; }
     }
 

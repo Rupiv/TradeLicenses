@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
+using Dapper;
+using Gba.TradeLicense.Api.Services;
 using Gba.TradeLicense.Application.Models;
 using Gba.TradeLicense.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
@@ -32,6 +34,7 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
         }
 
         [HttpPost("save")]
+        [StaffOnly] // officer auto-save on the certificate page; traders only download
         [RequestSizeLimit(25 * 1024 * 1024)] // request body limit (base64 is bigger than binary)
         public async Task<IActionResult> Save([FromBody] SaveGeneratedLicenceRequest request, CancellationToken ct)
         {
@@ -39,6 +42,14 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
             if (request.LicenceApplicationID <= 0) return BadRequest("Invalid licenceApplicationID.");
             if (string.IsNullOrWhiteSpace(request.FileContentBase64)) return BadRequest("fileContentBase64 is required.");
             if (!AllowedContentTypes.Contains(request.ContentType ?? string.Empty)) return BadRequest("Unsupported contentType.");
+
+            // A licence certificate exists only for an APPROVED application (status 3).
+            var isApproved = await _db.Database.GetDbConnection().ExecuteScalarAsync<int>(
+                @"SELECT COUNT(1) FROM dbo.Licence_Application
+                  WHERE licenceApplicationID = @id AND licenceApplicationStatusID = 3",
+                new { id = (long)request.LicenceApplicationID }) > 0;
+            if (!isApproved)
+                return Conflict("The licence can be saved only after the application is approved.");
 
             byte[] fileBytes;
             try
@@ -158,6 +169,13 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
                 // the licence is saved under the submitted Licence_Application id. Only map when
                 // asked: draft ids and old submitted ids overlap, so guessing could return
                 // somebody else's licence.
+                // Traders: only their own licence (draft id or submitted id - both are checked
+                // against the same owner).
+                if (CallerAccess.IsTrader(User) &&
+                    !await CallerAccess.OwnsApplicationAsync(_db.Database.GetDbConnection(), User, licenceApplicationID,
+                        draft ? ApplicationIdKind.Draft : ApplicationIdKind.Submitted))
+                    return Forbid();
+
                 if (draft)
                 {
                     var submittedId = await ResolveSubmittedApplicationIdAsync(licenceApplicationID, ct);

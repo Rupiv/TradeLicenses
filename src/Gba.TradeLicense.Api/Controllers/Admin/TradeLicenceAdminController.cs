@@ -10,6 +10,7 @@ namespace TradeLicence.API.Controllers
 {
     [Authorize]
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly]
     [Route("api/trade-licence/admin")]
     public class TradeLicenceAdminController : ControllerBase
     {

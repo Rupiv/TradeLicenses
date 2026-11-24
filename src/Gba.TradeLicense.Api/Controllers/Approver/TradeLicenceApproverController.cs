@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 namespace Gba.TradeLicense.Api.Controllers.Approver
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly]
     [Route("api/trade-licence/approver")]
     public class TradeLicenceApproverController : ControllerBase
     {

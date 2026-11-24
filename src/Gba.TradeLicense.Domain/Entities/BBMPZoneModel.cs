@@ -9,10 +9,12 @@ namespace Gba.TradeLicense.Domain.Entities
     public class BBMPZoneModel
     {
         public int zoneID { get; set; }
-        public string zoneCode { get; set; }
-        public string zoneCodeOld { get; set; }
+        // Optional: the Master Data screen sends only the zone name (non-nullable strings were
+        // implicitly [Required], so every create / update returned 400)
+        public string? zoneCode { get; set; }
+        public string? zoneCodeOld { get; set; }
         public string zoneName { get; set; }
-        public string zoneNativeName { get; set; }
+        public string? zoneNativeName { get; set; }
         public DateTime entryDate { get; set; }
     }
     public class BBMPWardDropdownModel

@@ -19,7 +19,9 @@ public sealed record RegisterUserDto
 public sealed record LoginDto
 (
     string MobileNumber,
-    string? CaptchaToken
+    string? CaptchaToken,
+    // One-time proof from POST /api/sms/otp/verify that this mobile number's OTP was verified
+    string? OtpToken = null
 );
 
 // Result returned by Login Stored Procedure (usp_LoginUser)

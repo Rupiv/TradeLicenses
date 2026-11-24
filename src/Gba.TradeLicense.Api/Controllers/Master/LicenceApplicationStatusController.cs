@@ -7,6 +7,7 @@ using Dapper;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/master/licence-status")]
     public class LicenceApplicationStatusController : ControllerBase
     {

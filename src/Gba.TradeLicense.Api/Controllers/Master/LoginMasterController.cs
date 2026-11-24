@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly]
 [Route("api/login-master")]
 public class LoginMasterController : ControllerBase
 {
@@ -17,6 +18,17 @@ public class LoginMasterController : ControllerBase
 
     private IDbConnection Db()
         => new SqlConnection(_config.GetConnectionString("Default"));
+
+    // Never send stored passwords (or hashes) to the browser; the edit form clears it anyway.
+    private static object? WithoutPassword(object? row)
+    {
+        if (row is IDictionary<string, object> dict)
+        {
+            foreach (var key in dict.Keys.Where(k => k.Contains("password", StringComparison.OrdinalIgnoreCase)).ToList())
+                dict.Remove(key);
+        }
+        return row;
+    }
 
     /* ================= CREATE ================= */
     [HttpPost]
@@ -63,7 +75,7 @@ public class LoginMasterController : ControllerBase
         var totalRecords = await multi.ReadFirstAsync<int>();
 
         // 2️⃣ Paged Data
-        var users = (await multi.ReadAsync()).ToList();
+        var users = (await multi.ReadAsync()).Select(u => WithoutPassword((object?)u)).ToList();
 
         return Ok(new
         {
@@ -129,7 +141,7 @@ public class LoginMasterController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
-        return Ok(data);
+        return Ok(WithoutPassword((object?)data));
     }
 
     /* ================= SEARCH ================= */
@@ -149,7 +161,9 @@ public class LoginMasterController : ControllerBase
         parameters.Add("@PageSize", pageSize);
 
         int totalRecords = 0;
-        var users = new List<LoginMasterDto>();
+        // Same rows as the list (GETALL): LoginMasterDto has no loginID, so edit / delete from
+        // search results used id 0, and it carried the password back to the browser.
+        var users = new List<object?>();
 
         using (var multi = await db.QueryMultipleAsync(
             "usp_LoginMaster_CRUD",
@@ -161,7 +175,7 @@ public class LoginMasterController : ControllerBase
             totalRecords = await multi.ReadFirstAsync<int>();
 
             /* ========= SECOND RESULT SET → DATA ========= */
-            users = (await multi.ReadAsync<LoginMasterDto>()).ToList();
+            users = (await multi.ReadAsync()).Select(u => WithoutPassword((object?)u)).ToList();
         }
 
         return Ok(new

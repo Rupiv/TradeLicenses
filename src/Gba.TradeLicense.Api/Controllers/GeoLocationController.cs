@@ -172,10 +172,10 @@ namespace Gba.TradeLicense.Api.Controllers
             cmd.Parameters.AddWithValue("@LicenceApplicationID", model.LicenceApplicationID);
             cmd.Parameters.AddWithValue("@Latitude", model.Latitude);
             cmd.Parameters.AddWithValue("@Longitude", model.Longitude);
-            cmd.Parameters.AddWithValue("@RoadID", model.RoadID);
-            cmd.Parameters.AddWithValue("@RoadWidthMtrs", model.RoadWidthMtrs);
-            cmd.Parameters.AddWithValue("@RoadCategoryCode", model.RoadCategoryCode);
-            cmd.Parameters.AddWithValue("@RoadCategory", model.RoadCategory);
+            cmd.Parameters.AddWithValue("@RoadID", model.RoadID ?? string.Empty);
+            cmd.Parameters.AddWithValue("@RoadWidthMtrs", (int)Math.Round(model.RoadWidthMtrs, MidpointRounding.AwayFromZero));
+            cmd.Parameters.AddWithValue("@RoadCategoryCode", model.RoadCategoryCode ?? string.Empty);
+            cmd.Parameters.AddWithValue("@RoadCategory", model.RoadCategory ?? string.Empty);
             cmd.Parameters.AddWithValue("@LoginID", model.LoginID);
 
             con.Open();

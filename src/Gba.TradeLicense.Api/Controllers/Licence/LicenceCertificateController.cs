@@ -35,6 +35,26 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
 
                 await con.OpenAsync();
 
+                // Traders: only the licence of their own application (officers unchanged)
+                if (Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User))
+                {
+                    var ids = await con.QueryAsync<long>(
+                        "SELECT CAST(licenceApplicationID AS BIGINT) FROM dbo.Licence_Application WHERE applicationNumber = @applicationNumber",
+                        new { applicationNumber });
+                    var owns = false;
+                    foreach (var id in ids)
+                    {
+                        if (await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(
+                                con, User, id, Gba.TradeLicense.Api.Services.ApplicationIdKind.Submitted))
+                        {
+                            owns = true;
+                            break;
+                        }
+                    }
+                    if (!owns)
+                        return NotFound(new { message = "No approved licence found for this application number" });
+                }
+
                 // Online applications: give them a licence number before the procedure reads it
                 await EnsureOnlineLicenceNumber(con, applicationNumber);
                 // Old-system applications approved here: issue the receipt the old approval step did

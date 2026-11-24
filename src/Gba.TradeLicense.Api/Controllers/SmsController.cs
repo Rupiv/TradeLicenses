@@ -6,6 +6,7 @@ using Gba.TradeLicense.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Gba.TradeLicense.Api.Controllers
 {
@@ -16,12 +17,14 @@ namespace Gba.TradeLicense.Api.Controllers
         private readonly ISmsService _sms;
         private readonly IConfiguration _config;
         private readonly ILogger<SmsController> _logger;
+        private readonly IMemoryCache _cache;
 
-        public SmsController(ISmsService sms, IConfiguration config, ILogger<SmsController> logger)
+        public SmsController(ISmsService sms, IConfiguration config, ILogger<SmsController> logger, IMemoryCache cache)
         {
             _sms = sms;
             _config = config;
             _logger = logger;
+            _cache = cache;
         }
 
         private IDbConnection CreateConnection()
@@ -120,9 +123,15 @@ namespace Gba.TradeLicense.Api.Controllers
                 },
                 commandType: CommandType.StoredProcedure);
 
+            // A verified OTP also returns a one-time token (10 min, bound to this mobile number);
+            // auth/login-user requires it, so a trader session can no longer be opened with the
+            // mobile number alone.
             return Ok(new
             {
-                IsValid = isValid == 1
+                IsValid = isValid == 1,
+                OtpToken = isValid == 1
+                    ? Gba.TradeLicense.Api.Services.OtpLoginTokens.Issue(_cache, req.MobileNo)
+                    : null
             });
         }
 

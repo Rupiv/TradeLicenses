@@ -10,6 +10,7 @@ using Gba.TradeLicense.Api.Services;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/master/licence-process")]
     public class LicenceProcessController : ControllerBase
     {
@@ -46,6 +47,13 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             // ✅ Step 2: Model validation
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // 🔐 The action is recorded against the signed-in officer, never a loginID taken from
+            // the body (the screens already send the token's own id, so nothing changes for them).
+            var actorId = Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User);
+            if (actorId is not long actor || actor <= 0 || actor > int.MaxValue)
+                return Unauthorized();
+            request.LoginID = (int)actor;
 
             // ✅ Step 3: Extra manual validation (defense-in-depth)
             if (!string.IsNullOrEmpty(request.Remarks) &&
@@ -98,6 +106,10 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         public async Task<IActionResult> GetApplicationTimeline(int licenceApplicationID)
         {
             using var db = Db();
+
+            if (Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User) &&
+                !await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationID))
+                return Forbid();
 
             var result = await db.QueryAsync<ApplicationTimelineDto>(
                 "usp_Licence_SubmitAction",

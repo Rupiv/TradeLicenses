@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 [Authorize]
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly]
 [Route("api/dashboard")]
 public class DashboardController : ControllerBase
 {

@@ -34,6 +34,16 @@ namespace Gba.TradeLicense.Api.Controllers
         private IDbConnection Db()
             => new SqlConnection(_config.GetConnectionString("Default"));
 
+        // Traders may only see / change documents of their own applications (officers unchanged).
+        private async Task<bool> TraderMayNotAccess(IDbConnection db, long licenceApplicationId)
+            => Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User)
+               && !await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationId);
+
+        private Task<long?> DocumentApplicationIdAsync(IDbConnection db, int applicationDocumentID)
+            => db.ExecuteScalarAsync<long?>(
+                "SELECT CAST(LicenceApplicationID AS BIGINT) FROM Licence_Application_Document WHERE ApplicationDocumentID = @ID",
+                new { ID = applicationDocumentID });
+
         /* =====================================================
            UPLOAD PATH: Uploads/LicenceDocuments/yyyy/MM/dd
         ===================================================== */
@@ -62,6 +72,18 @@ namespace Gba.TradeLicense.Api.Controllers
         {
             if (model.File == null || model.File.Length == 0)
                 return BadRequest("File is required");
+
+            using (var authDb = Db())
+            {
+                if (await TraderMayNotAccess(authDb, model.LicenceApplicationID))
+                    return Forbid();
+                if (model.ApplicationDocumentID != null)
+                {
+                    var docAppId = await DocumentApplicationIdAsync(authDb, (int)model.ApplicationDocumentID.Value);
+                    if (docAppId != null && await TraderMayNotAccess(authDb, docAppId.Value))
+                        return Forbid();
+                }
+            }
 
             // Inspection photos (DocumentID 10) are images taken on site; every other document is a PDF.
             bool isInspectionPhoto = model.DocumentID == InspectionPhotoDocumentId;
@@ -154,6 +176,8 @@ namespace Gba.TradeLicense.Api.Controllers
         public async Task<IActionResult> GetByApplication(long licenceApplicationID)
         {
             using var db = Db();
+            if (await TraderMayNotAccess(db, licenceApplicationID))
+                return Forbid();
 
             var documents = await db.QueryAsync(
                 "usp_LicenceApplication_Document_CRUD",
@@ -219,6 +243,10 @@ namespace Gba.TradeLicense.Api.Controllers
             if (doc == null)
                 return NotFound("Document record not found");
 
+            var ownerAppId = await DocumentApplicationIdAsync(db, applicationDocumentID);
+            if (ownerAppId != null && await TraderMayNotAccess(db, ownerAppId.Value))
+                return Forbid();
+
             if (!System.IO.File.Exists(doc.FilePath))
                 return NotFound($"File not found on server");
 
@@ -270,6 +298,10 @@ namespace Gba.TradeLicense.Api.Controllers
         )
         {
             using var db = Db();
+
+            var ownerAppId = await DocumentApplicationIdAsync(db, applicationDocumentID);
+            if (ownerAppId != null && await TraderMayNotAccess(db, ownerAppId.Value))
+                return Forbid();
 
             await db.ExecuteAsync(
                 @"UPDATE Licence_Application_Document

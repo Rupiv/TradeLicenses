@@ -111,6 +111,15 @@ public class AuthController : ControllerBase
             });
         }
 
+        // 🔐 The OTP must have been verified on the server for THIS mobile number
+        if (!Gba.TradeLicense.Api.Services.OtpLoginTokens.TryConsume(_cache, dto.OtpToken, dto.MobileNumber))
+        {
+            return Unauthorized(new
+            {
+                Error = "OTP verification required. Please verify the OTP again."
+            });
+        }
+
         var result = await _authService.LoginUserByMobileAsync(
             dto.MobileNumber,
             ct

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/trade-type")]
 public class TradeTypeController : ControllerBase
 {

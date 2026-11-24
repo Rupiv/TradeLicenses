@@ -39,10 +39,13 @@ namespace Gba.TradeLicense.Domain.Entities
         public long LicenceApplicationID { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-        public string RoadID { get; set; }
-        public int RoadWidthMtrs { get; set; }
-        public string RoadCategoryCode { get; set; }
-        public string RoadCategory { get; set; }
+        // Optional: KGIS returns no road for some points and the trader then enters the width by
+        // hand, so these arrive as "" (non-nullable strings were implicitly [Required] -> 400).
+        public string? RoadID { get; set; }
+        // KGIS widths can be fractional (e.g. 7.5); stored as whole metres as before.
+        public decimal RoadWidthMtrs { get; set; }
+        public string? RoadCategoryCode { get; set; }
+        public string? RoadCategory { get; set; }
         public int LoginID { get; set; }
     }
 

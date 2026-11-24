@@ -8,6 +8,7 @@ using System.Data;
 using System.Security.Claims;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly]
 [Route("api/licence-workflow")]
 [Authorize]   // JWT protected
 public class LicenceWorkflowController : ControllerBase
@@ -20,7 +21,7 @@ public class LicenceWorkflowController : ControllerBase
     }
 
     private IDbConnection Db()
-        => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        => new SqlConnection(_config.GetConnectionString("Default"));
     [HttpPost("action")]
     public async Task<IActionResult> WorkflowAction(
     [FromBody] LicenceWorkflowRequest request)

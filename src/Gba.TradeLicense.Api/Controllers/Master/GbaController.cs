@@ -10,6 +10,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
     /// licence and the candidate GBA wards for an existing (legacy-ward) licence.
     /// </summary>
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/gba")]
     public class GbaController : ControllerBase
     {
@@ -160,6 +161,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
               WHERE j.isActive = 1";
 
         // Assignments of several users at once (for the user list)
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpGet("user-jurisdiction")]
         public async Task<IActionResult> GetUserJurisdictions([FromQuery] string? loginIds)
         {
@@ -185,6 +187,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             }
         }
 
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpGet("user-jurisdiction/{loginId:int}")]
         public async Task<IActionResult> GetUserJurisdiction(int loginId)
         {

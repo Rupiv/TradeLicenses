@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 namespace TradeLicence.API.Controllers
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly]
     [Route("api/trade-licence/senior-approver")]
     public class TradeLicenceSeniorApproverController : ControllerBase
     {

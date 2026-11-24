@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 namespace Gba.TradeLicense.Api.Controllers
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/office-types")]
     public class OfficeTypeController : ControllerBase
     {

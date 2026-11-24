@@ -7,6 +7,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/office-details")]
 public class OfficeDetailsController : ControllerBase
 {

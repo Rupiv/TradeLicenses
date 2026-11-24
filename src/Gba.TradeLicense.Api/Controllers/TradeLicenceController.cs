@@ -26,6 +26,23 @@ public class TradeLicenceController : ControllerBase
     private IDbConnection Db()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
+    // Traders may only touch their own licence records. A brand-new draft that no application
+    // points to yet (POST then PUT while the form is saved) stays editable as before.
+    private async Task<bool> TraderMayNotAccessLicence(IDbConnection db, long tradeLicenceId)
+    {
+        if (!CallerAccess.IsTrader(User)) return false;
+        if (await CallerAccess.OwnsTradeLicenceAsync(db, User, tradeLicenceId)) return false;
+        var linked = await db.ExecuteScalarAsync<int>(
+            @"SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.Licence_Application_Temp WHERE tradeLicenceID = @id)
+                          OR EXISTS (SELECT 1 FROM dbo.Licence_Application WHERE tradeLicenceID = @id)
+                     THEN 1 ELSE 0 END",
+            new { id = tradeLicenceId });
+        return linked == 1;
+    }
+
+    private bool TraderActsForSomeoneElse(long userId)
+        => CallerAccess.IsTrader(User) && CallerAccess.CallerId(User) != userId;
+
     private int? LoginId()
         => int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                         ?? User.FindFirst("sub")?.Value, out var id) ? id : null;
@@ -102,6 +119,9 @@ public class TradeLicenceController : ControllerBase
     [HttpGet("user/{userId}/applications")]
     public async Task<IActionResult> GetUserApplications(int userId)
     {
+        if (TraderActsForSomeoneElse(userId))
+            return Forbid();
+
         using var con = Db();
 
         var data = await con.QueryAsync<dynamic>(
@@ -307,6 +327,8 @@ public class TradeLicenceController : ControllerBase
             return BadRequest(new { Message = gbaError });
 
         using var db = Db();
+        if (await TraderMayNotAccessLicence(db, id))
+            return Forbid();
 
         await db.ExecuteAsync(
             "usp_TradeLicence_CRUD",
@@ -353,6 +375,8 @@ public class TradeLicenceController : ControllerBase
     public async Task<IActionResult> GetById(long id)
     {
         using var db = Db();
+        if (await TraderMayNotAccessLicence(db, id))
+            return Forbid();
 
         var data = await db.QueryAsync(
             "usp_TradeLicence_CRUD",
@@ -369,6 +393,7 @@ public class TradeLicenceController : ControllerBase
 
 
     [HttpGet("search")]
+    [StaffOnly]
     public async Task<IActionResult> Search([FromQuery] string? text)
     {
         using var db = Db();
@@ -391,6 +416,8 @@ public class TradeLicenceController : ControllerBase
     public async Task<IActionResult> DeleteDraft(long id)
     {
         using var db = Db();
+        if (await TraderMayNotAccessLicence(db, id))
+            return Forbid();
 
         await db.ExecuteAsync(
             "usp_TradeLicence_CRUD",
@@ -407,6 +434,9 @@ public class TradeLicenceController : ControllerBase
     [HttpGet("user/{userId}/profile")]
     public async Task<IActionResult> GetUserWithLicence(int userId)
     {
+        if (TraderActsForSomeoneElse(userId))
+            return Forbid();
+
         using var db = Db();
 
         var data = await db.QueryAsync(
@@ -426,6 +456,19 @@ public class TradeLicenceController : ControllerBase
     public async Task<IActionResult> FinalSubmit(long id)
     {
         using var db = Db();
+        if (await TraderMayNotAccessLicence(db, id))
+            return Forbid();
+
+        // Payment-before-submission: the draft application of this licence must have a
+        // gateway-verified payment (logged by payment/payment-success) before it is submitted.
+        var paid = await db.ExecuteScalarAsync<int>(
+            @"SELECT COUNT(1)
+              FROM dbo.Licence_Application_Temp t
+              JOIN dbo.Payment_Audit_Log p ON p.LicenceApplicationId = t.licenceApplicationID
+              WHERE t.tradeLicenceID = @id AND p.PaymentStage = 'SUCCESS' AND ISNULL(p.IsActive, 1) = 1",
+            new { id });
+        if (paid == 0)
+            return BadRequest(new { Submitted = false, Error = "Payment for this application is not completed yet." });
 
         try
         {

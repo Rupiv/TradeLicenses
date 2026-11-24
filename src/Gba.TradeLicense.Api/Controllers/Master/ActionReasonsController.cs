@@ -9,6 +9,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
     using Microsoft.Data.SqlClient;
 
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/action-reasons")]
     public class ActionReasonsController : ControllerBase
     {

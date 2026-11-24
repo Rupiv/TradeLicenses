@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/master-moh")]
 public class MasterMohController : ControllerBase
 {

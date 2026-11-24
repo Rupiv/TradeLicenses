@@ -7,6 +7,7 @@ using Microsoft.Data.SqlClient;
 namespace Gba.TradeLicense.Api.Controllers
 {
     [Authorize]
+    [Gba.TradeLicense.Api.Services.StaffOnly]
     [Route("api/reports")]
     [ApiController]
     public class ReportsController : ControllerBase

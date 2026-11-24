@@ -233,6 +233,7 @@ namespace Gba.TradeLicense.Api.Controllers
            3️⃣ VERIFY PAYMENT (READ-ONLY)
         ========================================================= */
         // Transaction status API v2.1 (only Txnid + CorporationId are needed)
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] VerifyPaymentDto req)
         {
@@ -250,6 +251,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            4️⃣ REFUND PAYMENT
         ========================================================= */
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpPost("refund")]
         public IActionResult RefundPayment([FromBody] RefundPaymentDto req)
         {
@@ -270,6 +272,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            5️⃣ TRANSACTIONS BY DATE
         ========================================================= */
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpGet("transactions-by-date")]
         public IActionResult TransactionsByDate(int corporationId, DateTime transactionDate)
         {
@@ -305,6 +308,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* =========================================================
            6️⃣ PAYOUTS
         ========================================================= */
+        [Gba.TradeLicense.Api.Services.StaffOnly]
         [HttpGet("payouts")]
         public IActionResult Payouts(int corporationId, DateTime payoutDate)
         {

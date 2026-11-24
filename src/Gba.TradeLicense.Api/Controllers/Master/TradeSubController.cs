@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/master/trade-sub")]
 public class TradeSubController : ControllerBase
 {

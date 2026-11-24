@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/trade-zonal-classification")]
     public class TradeZonalClassificationController : ControllerBase
     {
@@ -82,9 +83,9 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@Action", "INSERT");
-            cmd.Parameters.AddWithValue("@zonalCode", model.ZonalCode);
+            cmd.Parameters.AddWithValue("@zonalCode", (object?)model.ZonalCode ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@zonalClassificationName", model.ZonalClassificationName);
-            cmd.Parameters.AddWithValue("@zonalClassificationNativeName", model.ZonalClassificationNativeName);
+            cmd.Parameters.AddWithValue("@zonalClassificationNativeName", (object?)model.ZonalClassificationNativeName ?? DBNull.Value);
 
             con.Open();
             int id = Convert.ToInt32(cmd.ExecuteScalar());
@@ -107,9 +108,9 @@ namespace Gba.TradeLicense.Api.Controllers.Master
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.Parameters.AddWithValue("@Action", "UPDATE");
             cmd.Parameters.AddWithValue("@zonalClassificationID", model.ZonalClassificationID);
-            cmd.Parameters.AddWithValue("@zonalCode", model.ZonalCode);
+            cmd.Parameters.AddWithValue("@zonalCode", (object?)model.ZonalCode ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@zonalClassificationName", model.ZonalClassificationName);
-            cmd.Parameters.AddWithValue("@zonalClassificationNativeName", model.ZonalClassificationNativeName);
+            cmd.Parameters.AddWithValue("@zonalClassificationNativeName", (object?)model.ZonalClassificationNativeName ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@isActive", model.IsActive ? "Y" : "N");
 
             con.Open();

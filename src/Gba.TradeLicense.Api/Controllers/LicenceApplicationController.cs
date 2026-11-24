@@ -26,12 +26,22 @@ public class LicenceApplicationController : ControllerBase
     private IDbConnection CreateConnection()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
+    // Traders may only work on their own applications (officers are unchanged).
+    private async Task<bool> TraderMayNotAccess(IDbConnection db, long licenceApplicationId)
+        => CallerAccess.IsTrader(User) && !await CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationId);
+
+    private bool TraderActsForSomeoneElse(long loginId)
+        => CallerAccess.IsTrader(User) && CallerAccess.CallerId(User) != loginId;
+
     // ================= INSERT DRAFT =================
     [HttpPost("draft")]
     public async Task<IActionResult> InsertDraft(
         [FromBody] LicenceApplicationUpsertDto dto,
         CancellationToken ct)
     {
+        if (TraderActsForSomeoneElse(dto.LoginID))
+            return Forbid();
+
         using var db = CreateConnection();
 
         var id = await db.ExecuteScalarAsync<long>(
@@ -79,6 +89,9 @@ public class LicenceApplicationController : ControllerBase
         CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, id))
+            return Forbid();
+
         db.Open();
         using var transaction = db.BeginTransaction();
 
@@ -132,6 +145,8 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> GetById(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, id))
+            return Forbid();
 
         var result = await db.QueryFirstOrDefaultAsync<dynamic>(
             "usp_LicenceApplication_CRUD",
@@ -160,6 +175,7 @@ public class LicenceApplicationController : ControllerBase
 
     // ================= SEARCH =================
     [HttpGet("search")]
+    [StaffOnly]
     public async Task<IActionResult> Search([FromQuery] string? q, CancellationToken ct)
     {
         using var db = CreateConnection();
@@ -182,6 +198,8 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> DeleteDraft(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, id))
+            return Forbid();
 
         await db.ExecuteAsync(
             "usp_LicenceApplication_CRUD",
@@ -201,6 +219,13 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> PaymentSuccess(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, id))
+            return Forbid();
+
+        // 🔐 Never take "paid" from the browser: the gateway response must already have been
+        // verified and logged by payment/payment-success (which runs before this page loads).
+        if (!await CallerAccess.HasVerifiedPaymentAsync(db, id))
+            return BadRequest(new { Message = "Payment for this application is not completed yet." });
 
         var result = await db.QuerySingleAsync<dynamic>(
             "usp_LicenceApplication_CRUD",
@@ -225,6 +250,16 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> FinalSubmit(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, id))
+            return Forbid();
+
+        // Payment-before-submission: only a gateway-verified payment may be submitted.
+        if (!await CallerAccess.HasVerifiedPaymentAsync(db, id))
+            return BadRequest(new DbResponse
+            {
+                Submitted = false,
+                Message = "Payment for this application is not completed yet."
+            });
 
         var result = await db.QueryFirstOrDefaultAsync<DbResponse>(
             "usp_LicenceApplication_CRUD",
@@ -266,6 +301,9 @@ public class LicenceApplicationController : ControllerBase
      [FromQuery] int pageSize = 10,
      CancellationToken ct = default)
     {
+        if (TraderActsForSomeoneElse(loginId))
+            return Forbid();
+
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize <= 0) pageSize = 10;
         if (pageSize > 100) pageSize = 100;
@@ -402,6 +440,9 @@ public class LicenceApplicationController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
+        if (TraderActsForSomeoneElse(loginId))
+            return Forbid();
+
         using var db = CreateConnection();
 
         using var multi = await db.QueryMultipleAsync(
@@ -429,6 +470,7 @@ public class LicenceApplicationController : ControllerBase
 
     // ================= GET ALL PAGED =================
     [HttpGet("paged")]
+    [StaffOnly]
     public async Task<IActionResult> GetAllApplicationsPaged(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
@@ -463,6 +505,8 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> GetCurrentStatus(long licenceApplicationID)
     {
         using var db = CreateConnection();
+        if (await TraderMayNotAccess(db, licenceApplicationID))
+            return Forbid();
 
         var status = await db.QueryFirstOrDefaultAsync(
             "usp_LicenceApplication_TrackStatus",

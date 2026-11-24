@@ -7,6 +7,7 @@ using Gba.TradeLicense.Domain.Entities;
 namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.StaffOnly]
     [Route("api/trade-licence/zone-approver")]
     public class TradeLicenceZoneApproverController : ControllerBase
     {
