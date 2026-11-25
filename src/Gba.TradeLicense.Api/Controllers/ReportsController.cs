@@ -8,6 +8,7 @@ namespace Gba.TradeLicense.Api.Controllers
 {
     [Authorize]
     [Gba.TradeLicense.Api.Services.StaffOnly]
+    [Gba.TradeLicense.Api.Services.AdminOnly(Message = "This report is available to administrators only until it can be limited to your jurisdiction.")]
     [Route("api/reports")]
     [ApiController]
     public class ReportsController : ControllerBase
@@ -59,7 +60,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 return StatusCode(500, new
                 {
                     message = "Error generating report",
-                    detail = ex.Message
+                    detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
                 });
             }
         }

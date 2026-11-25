@@ -24,7 +24,11 @@ public sealed record LicenceApplicationUpsertDto
     string? JathaStatus,
     bool DocsSubmitted,
     string? ChallanNo,
-    int NoOfYearsApplied
+    int NoOfYearsApplied,
+    // Declared on the New Licence form; used for the power fee (max(HP) x 100). Optional so
+    // older clients keep working (null = leave the stored value unchanged).
+    decimal? PowerHP = null,
+    decimal? GeneratorHP = null
 );
 public class MasterDocumentDto
 {

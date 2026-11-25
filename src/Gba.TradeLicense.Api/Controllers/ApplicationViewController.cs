@@ -120,6 +120,8 @@ namespace Gba.TradeLicense.Api.Controllers
                 return NotFound(new { Message = "Application not found." });
             if (IsTrader() && !await CanViewAsync(db, la.Value.LoginID, la.Value.TradeLicenceID, isFinal: true))
                 return Forbid();
+            if (!IsTrader() && !await CallerAccess.OfficerMayAccessAsync(db, User, licenceApplicationId, ApplicationIdKind.Submitted))
+                return Forbid();
 
             // Draft of an online application: same licence record and same applicant
             var draftId = await db.ExecuteScalarAsync<long?>(
@@ -315,10 +317,14 @@ namespace Gba.TradeLicense.Api.Controllers
                     return NotFound(new { Message = "Application not found." });
                 if (IsTrader() && !await CanViewAsync(db, fa.Value.LoginID, fa.Value.TradeLicenceID, isFinal: true))
                     return Forbid();
+                if (!IsTrader() && !await CallerAccess.OfficerMayAccessAsync(db, User, licenceApplicationId, ApplicationIdKind.Submitted))
+                    return Forbid();
 
                 return Ok(await BuildSubmittedOnlyViewAsync(db, licenceApplicationId));
             }
             if (IsTrader() && !await CanViewAsync(db, temp.LoginID, temp.TradeLicenceID, isFinal: false))
+                return Forbid();
+            if (!IsTrader() && !await CallerAccess.OfficerMayAccessAsync(db, User, licenceApplicationId, ApplicationIdKind.Draft))
                 return Forbid();
 
             // 1) Existing full-details procedure (header, trades, documents, geo)
@@ -510,6 +516,8 @@ namespace Gba.TradeLicense.Api.Controllers
                 return NotFound(new { Message = "Application not found." });
             if (IsTrader() && temp.LoginID != CallerId())
                 return Forbid();
+            if (!IsTrader() && !await CallerAccess.OfficerMayAccessAsync(db, User, licenceApplicationId, ApplicationIdKind.Draft))
+                return Forbid();
 
             if (await GetFinalAsync(db, licenceApplicationId) is { } already)
                 return Ok(new { Submitted = true, AlreadySubmitted = true, ApplicationNumber = (string?)already.applicationNumber });
@@ -543,7 +551,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 }
                 catch (SqlException ex)
                 {
-                    return BadRequest(new { Message = "Could not submit the licence details: " + ex.Message });
+                    return BadRequest(new { Message = "Could not submit the licence details: " + CallerAccess.SafeDbMessage(ex, "please try again or contact support.") });
                 }
             }
 
@@ -567,7 +575,7 @@ namespace Gba.TradeLicense.Api.Controllers
             }
             catch (SqlException ex)
             {
-                return BadRequest(new { Message = "Could not submit the application: " + ex.Message });
+                return BadRequest(new { Message = "Could not submit the application: " + CallerAccess.SafeDbMessage(ex, "please try again or contact support.") });
             }
         }
     }

@@ -8,6 +8,7 @@ using System.Data;
 using System.Security.Claims;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.AdminOnly]
 [Gba.TradeLicense.Api.Services.StaffOnly]
 [Route("api/licence-workflow")]
 [Authorize]   // JWT protected
@@ -55,7 +56,7 @@ public class LicenceWorkflowController : ControllerBase
             return BadRequest(new
             {
                 Success = 0,
-                Message = ex.Message
+                Message = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
             });
         }
     }

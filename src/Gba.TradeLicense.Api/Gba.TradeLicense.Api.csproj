@@ -3,6 +3,8 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- local development secrets: dotnet user-secrets set "Jwt:Key" "..." (see Program.cs) -->
+		<UserSecretsId>gba-tradelicense-api</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,5 +25,14 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" PrivateAssets="all" />
 
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	</ItemGroup>
+
+	<!-- Customer data is never packaged: licence certificates (wwwroot/uploads) and uploaded documents
+	     (Uploads/) live only on the server and are created there at run time. -->
+	<ItemGroup>
+		<Content Remove="wwwroot\uploads\**" />
+		<None Remove="wwwroot\uploads\**" />
+		<Content Remove="Uploads\**" />
+		<None Remove="Uploads\**" />
 	</ItemGroup>
 </Project>

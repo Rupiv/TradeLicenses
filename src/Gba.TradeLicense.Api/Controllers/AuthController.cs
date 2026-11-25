@@ -22,13 +22,16 @@ public class AuthController : ControllerBase
     private readonly ISmsService _sms;
     private readonly IConfiguration _config;
     private readonly IMemoryCache _cache;
+    private readonly Gba.TradeLicense.Api.Services.OtpGuard _otpGuard;
 
-    public AuthController(IAuthService authService, ISmsService sms, IConfiguration config, IMemoryCache cache)
+    public AuthController(IAuthService authService, ISmsService sms, IConfiguration config, IMemoryCache cache,
+        Gba.TradeLicense.Api.Services.OtpGuard otpGuard)
     {
         _authService = authService;
         _sms = sms;
         _config = config;
         _cache = cache;
+        _otpGuard = otpGuard;
     }
     private IDbConnection Db()
              => new SqlConnection(_config.GetConnectionString("Default"));
@@ -153,9 +156,14 @@ public class AuthController : ControllerBase
         {
             var secret = _config["ReCaptcha:SecretKey"];
             using var client = new HttpClient();
+            // secret + token in the POST body (form-encoded), not in a URL that proxies / logs can record
             var response = await client.PostAsync(
-                "https://www.google.com/recaptcha/api/siteverify?secret=" + secret + "&response=" + token,
-                null);
+                "https://www.google.com/recaptcha/api/siteverify",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["secret"] = secret ?? string.Empty,
+                    ["response"] = token
+                }));
             var json = await response.Content.ReadAsStringAsync();
 
             using var doc = JsonDocument.Parse(json);
@@ -231,6 +239,11 @@ public class AuthController : ControllerBase
         if (!string.IsNullOrWhiteSpace(req.MobileNo) && LastTenDigits(req.MobileNo) != LastTenDigits(mobileNo))
             return BadRequest(new { Message = "Mobile number does not match the registered mobile for this username" });
 
+        // cooldown + per-number / per-IP limits
+        var limited = _otpGuard.TryReserveSend(mobileNo, HttpContext.Connection.RemoteIpAddress?.ToString());
+        if (limited != null)
+            return StatusCode(StatusCodes.Status429TooManyRequests, new { Message = limited });
+
         string? otp = await db.ExecuteScalarAsync<string>(
             "USP_OTP_PROCESS",
             new
@@ -290,15 +303,37 @@ public class AuthController : ControllerBase
         if (user == null || string.IsNullOrWhiteSpace(user.MobileNo))
             return BadRequest(new { Message = "User not found" });
 
-        int isValid = await db.ExecuteScalarAsync<int>(
-            "USP_OTP_PROCESS",
-            new
-            {
-                Action = "VERIFY",
-                MobileNo = user.MobileNo,
-                OTP = req.Otp
-            },
-            commandType: CommandType.StoredProcedure);
+        // same protection as sms/otp/verify
+        var verifyLock = _otpGuard.VerifyLock(user.MobileNo);
+        if (!await verifyLock.WaitAsync(TimeSpan.FromSeconds(10)))
+            return StatusCode(StatusCodes.Status429TooManyRequests, new { Message = "Please try again." });
+
+        int isValid;
+        try
+        {
+            if (_otpGuard.IsVerifyLocked(user.MobileNo))
+                return StatusCode(StatusCodes.Status429TooManyRequests,
+                    new { IsValid = false, Message = "Too many wrong OTP attempts. Please request a new OTP after some time." });
+
+            isValid = _otpGuard.WasAlreadyUsed(user.MobileNo, req.Otp)
+                ? 0
+                : await db.ExecuteScalarAsync<int>(
+                    "USP_OTP_PROCESS",
+                    new
+                    {
+                        Action = "VERIFY",
+                        MobileNo = user.MobileNo,
+                        OTP = req.Otp
+                    },
+                    commandType: CommandType.StoredProcedure);
+
+            if (isValid == 1) _otpGuard.RecordSuccess(user.MobileNo, req.Otp);
+            else _otpGuard.RecordFailure(user.MobileNo);
+        }
+        finally
+        {
+            verifyLock.Release();
+        }
 
         if (isValid != 1)
             return BadRequest(new { IsValid = false, Message = "Invalid or expired OTP" });

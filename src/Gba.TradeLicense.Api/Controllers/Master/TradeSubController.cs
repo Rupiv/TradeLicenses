@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
 [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/master/trade-sub")]
 public class TradeSubController : ControllerBase
@@ -70,7 +71,7 @@ public class TradeSubController : ControllerBase
             return BadRequest(new
             {
                 success = false,
-                error = ex.Message
+                error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
             });
         }
     }
@@ -105,7 +106,7 @@ public class TradeSubController : ControllerBase
             return BadRequest(new
             {
                 success = false,
-                error = ex.Message
+                error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
             });
         }
     }

@@ -26,19 +26,9 @@ public class TradeLicenceController : ControllerBase
     private IDbConnection Db()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
-    // Traders may only touch their own licence records. A brand-new draft that no application
-    // points to yet (POST then PUT while the form is saved) stays editable as before.
+    // Traders: own records (or a brand-new unlinked one); officers: their GBA jurisdiction; admin: all.
     private async Task<bool> TraderMayNotAccessLicence(IDbConnection db, long tradeLicenceId)
-    {
-        if (!CallerAccess.IsTrader(User)) return false;
-        if (await CallerAccess.OwnsTradeLicenceAsync(db, User, tradeLicenceId)) return false;
-        var linked = await db.ExecuteScalarAsync<int>(
-            @"SELECT CASE WHEN EXISTS (SELECT 1 FROM dbo.Licence_Application_Temp WHERE tradeLicenceID = @id)
-                          OR EXISTS (SELECT 1 FROM dbo.Licence_Application WHERE tradeLicenceID = @id)
-                     THEN 1 ELSE 0 END",
-            new { id = tradeLicenceId });
-        return linked == 1;
-    }
+        => !await CallerAccess.MayAccessLicenceAsync(db, User, tradeLicenceId);
 
     private bool TraderActsForSomeoneElse(long userId)
         => CallerAccess.IsTrader(User) && CallerAccess.CallerId(User) != userId;
@@ -497,7 +487,7 @@ public class TradeLicenceController : ControllerBase
             return BadRequest(new
             {
                 Submitted = false,
-                Error = ex.Message
+                Error = CallerAccess.SafeDbMessage(ex, "The licence details could not be submitted. Please try again.")
             });
         }
     }

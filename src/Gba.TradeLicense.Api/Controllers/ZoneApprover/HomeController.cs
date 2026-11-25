@@ -43,6 +43,8 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
             int pageNumber = 1,
             int pageSize = 10)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            loginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, loginId);
             // GBA-assigned officer: queue follows the Corporation/Zone/Ward assignment
             if (await _gbaQueue.HasAssignmentAsync(loginId))
             {
@@ -109,6 +111,8 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
       int? mohId,
       int? wardId)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            loginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, loginId);
             if (await _gbaQueue.HasAssignmentAsync(loginId))
             {
                 var c = await _gbaQueue.GetStatusCountsAsync(loginId, QueueStatuses, mohId, wardId);
@@ -162,6 +166,8 @@ namespace Gba.TradeLicense.Api.Controllers.ZoneApprover
         [HttpGet("lookup")]
         public async Task<IActionResult> GetLookup(int loginId)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            loginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, loginId);
             // GBA-assigned officer: only the assigned GBA zone(s) and ward(s)
             if (await _gbaQueue.HasAssignmentAsync(loginId))
             {

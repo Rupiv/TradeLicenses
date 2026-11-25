@@ -7,6 +7,7 @@ using Gba.TradeLicense.Domain.Entities;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/mlc")]
     public class MLCController : ControllerBase

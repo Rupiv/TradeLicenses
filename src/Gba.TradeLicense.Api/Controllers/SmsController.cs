@@ -18,13 +18,16 @@ namespace Gba.TradeLicense.Api.Controllers
         private readonly IConfiguration _config;
         private readonly ILogger<SmsController> _logger;
         private readonly IMemoryCache _cache;
+        private readonly Gba.TradeLicense.Api.Services.OtpGuard _otpGuard;
 
-        public SmsController(ISmsService sms, IConfiguration config, ILogger<SmsController> logger, IMemoryCache cache)
+        public SmsController(ISmsService sms, IConfiguration config, ILogger<SmsController> logger, IMemoryCache cache,
+            Gba.TradeLicense.Api.Services.OtpGuard otpGuard)
         {
             _sms = sms;
             _config = config;
             _logger = logger;
             _cache = cache;
+            _otpGuard = otpGuard;
         }
 
         private IDbConnection CreateConnection()
@@ -33,6 +36,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ==========================================================
            APPLICATION RECEIVED
         ========================================================== */
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPost("application-received")]
         public async Task<IActionResult> ApplicationReceived(
             [FromBody] ApplicationSmsRequest req)
@@ -60,6 +64,11 @@ namespace Gba.TradeLicense.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(req.MobileNo))
                 return BadRequest("Mobile number is required");
+
+            // cooldown + per-number / per-IP limits (before an OTP is generated or sent)
+            var limited = _otpGuard.TryReserveSend(req.MobileNo, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (limited != null)
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { Message = limited });
 
             using var db = CreateConnection();
 
@@ -94,9 +103,9 @@ namespace Gba.TradeLicense.Api.Controllers
             // Karnataka (CDAC MSDG) gateway returns "402,MsgID = ..." when the message is accepted;
             // any other text is an error (credentials, sender ID, template, credits, ...).
             if (gatewayResponse == null || !gatewayResponse.TrimStart().StartsWith("402"))
-                return StatusCode(502, new { Message = "Failed to send OTP", GatewayResponse = gatewayResponse });
+                return StatusCode(502, new { Message = "Failed to send OTP" }); // gateway text stays in the log
 
-            return Ok(new { Message = "OTP sent successfully", GatewayResponse = gatewayResponse });
+            return Ok(new { Message = "OTP sent successfully" });
         }
 
         /* ==========================================================
@@ -111,17 +120,45 @@ namespace Gba.TradeLicense.Api.Controllers
                 || string.IsNullOrWhiteSpace(req.Otp))
                 return BadRequest("Invalid OTP request");
 
-            using var db = CreateConnection();
+            // one verification at a time per number; lockout after repeated wrong OTPs;
+            // an OTP already verified once is not accepted again
+            var verifyLock = _otpGuard.VerifyLock(req.MobileNo);
+            if (!await verifyLock.WaitAsync(TimeSpan.FromSeconds(10)))
+                return StatusCode(StatusCodes.Status429TooManyRequests, new { Message = "Please try again." });
 
-            int isValid = await db.ExecuteScalarAsync<int>(
-                "USP_OTP_PROCESS",
-                new
+            int isValid;
+            try
+            {
+                if (_otpGuard.IsVerifyLocked(req.MobileNo))
+                    return StatusCode(StatusCodes.Status429TooManyRequests,
+                        new { IsValid = false, Message = "Too many wrong OTP attempts. Please request a new OTP after some time." });
+
+                if (_otpGuard.WasAlreadyUsed(req.MobileNo, req.Otp))
                 {
-                    Action = "VERIFY",
-                    MobileNo = req.MobileNo,
-                    OTP = req.Otp
-                },
-                commandType: CommandType.StoredProcedure);
+                    isValid = 0;
+                }
+                else
+                {
+                    using var db = CreateConnection();
+
+                    isValid = await db.ExecuteScalarAsync<int>(
+                        "USP_OTP_PROCESS",
+                        new
+                        {
+                            Action = "VERIFY",
+                            MobileNo = req.MobileNo,
+                            OTP = req.Otp
+                        },
+                        commandType: CommandType.StoredProcedure);
+                }
+
+                if (isValid == 1) _otpGuard.RecordSuccess(req.MobileNo, req.Otp);
+                else _otpGuard.RecordFailure(req.MobileNo);
+            }
+            finally
+            {
+                verifyLock.Release();
+            }
 
             // A verified OTP also returns a one-time token (10 min, bound to this mobile number);
             // auth/login-user requires it, so a trader session can no longer be opened with the
@@ -138,6 +175,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ==========================================================
            PROVISIONAL CERTIFICATE
         ========================================================== */
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPost("provisional")]
         public async Task<IActionResult> Provisional(
             [FromBody] ApplicationSmsRequest req)
@@ -157,6 +195,7 @@ namespace Gba.TradeLicense.Api.Controllers
         /* ==========================================================
            FINAL DECISION
         ========================================================== */
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPost("final-decision")]
         public async Task<IActionResult> FinalDecision(
             [FromBody] FinalDecisionSmsRequest req)

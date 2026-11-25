@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
 [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/payment-gateway-banks")]
 public class PaymentGatewayBankController : ControllerBase

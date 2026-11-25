@@ -84,6 +84,62 @@ namespace Gba.TradeLicense.Api.Controllers
             return (IsCurrentHost(url) ? url! : $"{Request.Scheme}://{Request.Host}/gba").TrimEnd('/');
         }
 
+        /// <summary>
+        /// Fee master price (usp_GetTradeLicenceFee_ByTradeSubID_Only - the same lookup the form
+        /// uses) of every trade saved on the draft. Empty when no trade is saved.
+        /// </summary>
+        private static async Task<List<decimal>> TradeFeesAsync(SqlConnection con, long draftLicenceApplicationId)
+        {
+            var trades = (await con.QueryAsync(
+                "usp_LicenceTradeDetails_CRUD",
+                new { Action = "GET_BY_APP_ID", LicenceApplicationID = draftLicenceApplicationId },
+                commandType: CommandType.StoredProcedure)).ToList();
+
+            var fees = new List<decimal>();
+            foreach (var row in trades)
+            {
+                var dict = (IDictionary<string, object>)row;
+                var key = dict.Keys.FirstOrDefault(k => string.Equals(k, "tradeSubID", StringComparison.OrdinalIgnoreCase));
+                if (key == null || dict[key] == null || !int.TryParse(dict[key].ToString(), out var sub))
+                    continue;
+
+                var fee = await con.QueryFirstOrDefaultAsync<TradeLicenceFeeDto>(
+                    "usp_GetTradeLicenceFee_ByTradeSubID_Only",
+                    new { tradeSubID = sub },
+                    commandType: CommandType.StoredProcedure);
+                fees.Add(fee?.TradeLicenceFee ?? 0m); // the form uses 0 when no fee is configured
+            }
+            return fees;
+        }
+
+        /// <summary>
+        /// The gateway response must belong to a payment this API started: same transaction id,
+        /// same application and corporation, same amount as the INITIATED audit row. Stops a valid
+        /// response from being replayed for another application or a different amount.
+        /// Returns null when it matches, otherwise the reason.
+        /// </summary>
+        private static async Task<string?> MatchInitiatedPaymentAsync(SqlConnection con, string txnid,
+            long applicationId, int corporationId, decimal amount)
+        {
+            var initiated = await con.QueryFirstOrDefaultAsync(
+                @"SELECT TOP 1 LicenceApplicationId, CorporationId, Amount
+                  FROM dbo.Payment_Audit_Log
+                  WHERE TxnId = @txnid AND PaymentStage = 'INITIATED'
+                  ORDER BY CreatedOn",
+                new { txnid });
+            if (initiated == null)
+                return "Payment response does not match any payment started on this portal";
+
+            if (Convert.ToInt64(initiated.LicenceApplicationId) != applicationId ||
+                Convert.ToInt32(initiated.CorporationId) != corporationId)
+                return "Payment response does not match the application it was started for";
+
+            if (decimal.Round(Convert.ToDecimal(initiated.Amount), 2) != decimal.Round(amount, 2))
+                return "Paid amount does not match the amount of this application";
+
+            return null;
+        }
+
         private IActionResult RedirectToFailed(string txnid, string error)
             => Redirect($"{FrontendBaseUrl()}/trader/payment-failed" +
                         $"?txnid={Uri.EscapeDataString(txnid ?? string.Empty)}" +
@@ -100,12 +156,56 @@ namespace Gba.TradeLicense.Api.Controllers
                 string.IsNullOrWhiteSpace(req.Phone))
                 return BadRequest(new { Message = "Applicant name, email and phone are required for payment" });
 
+            // A trader pays only for their own draft (checked first, before anything about it is revealed)
+            using (var owner = new SqlConnection(_connectionString))
+            {
+                if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(
+                        owner, User, req.LicenceApplicationId, Gba.TradeLicense.Api.Services.ApplicationIdKind.Draft))
+                    return Forbid();
+            }
+
             // Fee goes to the corporation of the applicant's GBA ward - decided server-side,
             // never taken from the client (it used to be hardcoded to 1 = BBMP East).
             var corporationId = await _gba.GetCorporationForDraftApplicationAsync(req.LicenceApplicationId);
             if (corporationId == null)
                 return BadRequest(new { Message = "Ward / corporation is not set for this application. Please select the ward and save again." });
             req.CorporationId = corporationId.Value;
+
+            using (var check = new SqlConnection(_connectionString))
+            {
+                // A trader pays only for their own draft
+                if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(
+                        check, User, req.LicenceApplicationId, Gba.TradeLicense.Api.Services.ApplicationIdKind.Draft))
+                    return Forbid();
+
+                // Never trust the browser's amount. Recompute the existing fee rule from trusted data:
+                // fee master price of the saved trades + max(power HP, generator HP) x 100 + 500.
+                var tradeFees = await TradeFeesAsync(check, req.LicenceApplicationId);
+                if (tradeFees.Count == 0)
+                    return BadRequest(new { Message = "Trade details are not saved for this application. Please add the trade and save again." });
+
+                var hp = await Gba.TradeLicense.Api.Services.PowerHpStore.GetAsync(check, req.LicenceApplicationId);
+                var amount = decimal.Round(req.Amount, 2);
+                bool amountOk;
+                if (hp != null)
+                {
+                    // HP stored with the draft: the amount must be exactly the recomputed fee
+                    amountOk = amount == Gba.TradeLicense.Api.Services.LicenceFeeCalculator.Payable(tradeFees, hp.PowerHP, hp.GeneratorHP);
+                }
+                else
+                {
+                    // Draft saved before HP was stored: the power fee cannot be recomputed, so the
+                    // amount must at least cover the trades + 500 (as before this change)
+                    amountOk = amount >= Gba.TradeLicense.Api.Services.LicenceFeeCalculator.MinimumWithoutHp(tradeFees);
+                }
+
+                if (!amountOk)
+                {
+                    _logger.LogWarning("Payment initiate rejected for application {Id}: amount does not match the recomputed fee ({Mode})",
+                        req.LicenceApplicationId, hp != null ? "exact" : "minimum");
+                    return BadRequest(new { Message = "The payment amount does not match the licence fee. Please reload the application and try again." });
+                }
+            }
 
             var cfg = GetGatewayConfig(req.CorporationId);
             var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
@@ -189,19 +289,21 @@ namespace Gba.TradeLicense.Api.Controllers
             var cfg = GetGatewayConfig(corporationId);
             var easebuzz = new Easebuzz(cfg.Salt, cfg.Key, cfg.Env);
 
-            string hashString =
-                $"{cfg.Key}|{txnid}|{amount}|Trade Licence Fee|{firstname}|{email}|" +
-                $"{form["udf1"]}|{form["udf2"]}|||||||||{cfg.Salt}";
-
-            string generatedHash =
-                easebuzz.Easebuzz_Generatehash512(hashString).ToLower();
-
-            if (!string.Equals(receivedHash, generatedHash, StringComparison.OrdinalIgnoreCase))
+            // Gateway responses carry the REVERSE hash (salt|status|udf10..udf1|email|firstname|
+            // productinfo|amount|txnid|key) - the same check as payment-success. The request-hash
+            // formula used here before could never match a genuine response.
+            if (!easebuzz.VerifyResponseHash(form.ToDictionary(x => x.Key, x => x.Value.ToString())))
             {
                 return BadRequest("Invalid hash");
             }
 
             using var con = new SqlConnection(_connectionString);
+
+            if (!decimal.TryParse(amount, NumberStyles.Number, CultureInfo.InvariantCulture, out var paidAmount))
+                return BadRequest("Invalid amount");
+            var mismatch = MatchInitiatedPaymentAsync(con, txnid, applicationId, corporationId, paidAmount).GetAwaiter().GetResult();
+            if (mismatch != null)
+                return BadRequest(mismatch);
 
             // 🔒 AUDIT LOG
             con.Execute("usp_Payment_Audit_Log", new
@@ -209,7 +311,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 LicenceApplicationId = applicationId,
                 CorporationId = corporationId,
                 TxnId = txnid,
-                Amount = decimal.Parse(amount),
+                Amount = paidAmount,
                 PaymentStage = status.ToUpper(),
                 GatewayStatus = status,
                 ResponsePayload = JsonConvert.SerializeObject(form.ToDictionary(x => x.Key, x => x.Value.ToString()))
@@ -234,6 +336,7 @@ namespace Gba.TradeLicense.Api.Controllers
         ========================================================= */
         // Transaction status API v2.1 (only Txnid + CorporationId are needed)
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPost("verify")]
         public async Task<IActionResult> VerifyPayment([FromBody] VerifyPaymentDto req)
         {
@@ -252,6 +355,7 @@ namespace Gba.TradeLicense.Api.Controllers
            4️⃣ REFUND PAYMENT
         ========================================================= */
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPost("refund")]
         public IActionResult RefundPayment([FromBody] RefundPaymentDto req)
         {
@@ -273,6 +377,7 @@ namespace Gba.TradeLicense.Api.Controllers
            5️⃣ TRANSACTIONS BY DATE
         ========================================================= */
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpGet("transactions-by-date")]
         public IActionResult TransactionsByDate(int corporationId, DateTime transactionDate)
         {
@@ -309,6 +414,7 @@ namespace Gba.TradeLicense.Api.Controllers
            6️⃣ PAYOUTS
         ========================================================= */
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpGet("payouts")]
         public IActionResult Payouts(int corporationId, DateTime payoutDate)
         {
@@ -376,6 +482,24 @@ namespace Gba.TradeLicense.Api.Controllers
                 }
 
                 using var con = new SqlConnection(_connectionString);
+
+                // 🔐 Same transaction, application, corporation and amount as the payment we started
+                var mismatch = await MatchInitiatedPaymentAsync(con, txnid, applicationId, corporationId, amount);
+                if (mismatch != null)
+                {
+                    _logger.LogWarning("payment-success rejected for txnid {TxnId}: {Reason}", txnid, mismatch);
+                    con.Execute("usp_Payment_Audit_Log", new
+                    {
+                        LicenceApplicationId = applicationId,
+                        CorporationId = corporationId,
+                        TxnId = txnid,
+                        Amount = amount,
+                        PaymentStage = "MISMATCH",
+                        GatewayStatus = status,
+                        ResponsePayload = JsonConvert.SerializeObject(formValues)
+                    }, commandType: CommandType.StoredProcedure);
+                    return RedirectToFailed(txnid, mismatch + ". Please contact support with this Transaction ID.");
+                }
 
                 // 🔒 Audit log (UNCHANGED)
                 con.Execute("usp_Payment_Audit_Log", new

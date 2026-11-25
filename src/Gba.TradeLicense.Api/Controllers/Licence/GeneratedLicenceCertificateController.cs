@@ -51,6 +51,10 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
             if (!isApproved)
                 return Conflict("The licence can be saved only after the application is approved.");
 
+            if (!await CallerAccess.OfficerMayAccessAsync(_db.Database.GetDbConnection(), User,
+                    request.LicenceApplicationID, ApplicationIdKind.Submitted))
+                return Forbid();
+
             byte[] fileBytes;
             try
             {
@@ -171,8 +175,8 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
                 // somebody else's licence.
                 // Traders: only their own licence (draft id or submitted id - both are checked
                 // against the same owner).
-                if (CallerAccess.IsTrader(User) &&
-                    !await CallerAccess.OwnsApplicationAsync(_db.Database.GetDbConnection(), User, licenceApplicationID,
+                // Officers: only inside their GBA jurisdiction.
+                if (!await CallerAccess.MayAccessApplicationAsync(_db.Database.GetDbConnection(), User, licenceApplicationID,
                         draft ? ApplicationIdKind.Draft : ApplicationIdKind.Submitted))
                     return Forbid();
 

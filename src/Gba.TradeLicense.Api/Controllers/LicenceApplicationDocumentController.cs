@@ -34,10 +34,9 @@ namespace Gba.TradeLicense.Api.Controllers
         private IDbConnection Db()
             => new SqlConnection(_config.GetConnectionString("Default"));
 
-        // Traders may only see / change documents of their own applications (officers unchanged).
+        // Traders: documents of their own applications. Officers: applications in their GBA jurisdiction.
         private async Task<bool> TraderMayNotAccess(IDbConnection db, long licenceApplicationId)
-            => Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User)
-               && !await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationId);
+            => !await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(db, User, licenceApplicationId);
 
         private Task<long?> DocumentApplicationIdAsync(IDbConnection db, int applicationDocumentID)
             => db.ExecuteScalarAsync<long?>(
@@ -157,7 +156,8 @@ namespace Gba.TradeLicense.Api.Controllers
                     FileExtension = extension,
 
                     FileSizeKB = model.File.Length / 1024,
-                    EntryLoginID = model.LoginID
+                    // recorded against the signed-in user (officer photo uploads sent no id at all)
+                    EntryLoginID = (int)(Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) ?? model.LoginID)
                 },
                 commandType: CommandType.StoredProcedure
             );
@@ -312,7 +312,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 new
                 {
                     ID = applicationDocumentID,
-                    LoginID = loginID
+                    LoginID = (int)(Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) ?? loginID)
                 }
             );
 

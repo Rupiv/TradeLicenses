@@ -14,8 +14,32 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// --------------------------------------------------
+// SECRETS
+// --------------------------------------------------
+// Secrets are NOT kept in appsettings.json (it is in source control). Supply them per environment:
+//   - IIS / server: environment variables, e.g. ConnectionStrings__Default, Jwt__Key, Otp__Secret,
+//     ReCaptcha__SecretKey, Sms__Password, Sms__SecureKey, PaymentRedirect__PrivateKeyPath ...
+//     (web.config <environmentVariables> on the server only, or the machine / app-pool environment)
+//   - local development: `dotnet user-secrets set "Jwt:Key" "..."` (UserSecretsId in the .csproj)
+// The app refuses to start without the ones it cannot work without; values are never logged.
+static void RequireSetting(IConfiguration cfg, string key, int minLength = 1)
+{
+    var value = cfg[key];
+    if (string.IsNullOrWhiteSpace(value) || value.Length < minLength)
+        throw new InvalidOperationException(
+            $"Configuration '{key}' is missing{(minLength > 1 ? $" or shorter than {minLength} characters" : "")}. " +
+            "Set it as an environment variable (use '__' for ':') or a user secret - see Program.cs.");
+}
+RequireSetting(builder.Configuration, "ConnectionStrings:Default");
+RequireSetting(builder.Configuration, "Jwt:Key", 32);
+RequireSetting(builder.Configuration, "Jwt:Issuer");
+RequireSetting(builder.Configuration, "Jwt:Audience");
 
 // --------------------------------------------------
 // CORS
@@ -77,6 +101,39 @@ builder.Services.AddScoped<Gba.TradeLicense.Api.Services.GbaQueueService>();
 builder.Services.AddScoped<SMSHttpPostClient>();
 builder.Services.AddSingleton<BbmpBoundaryService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<Gba.TradeLicense.Api.Services.OtpGuard>();
+
+// --------------------------------------------------
+// RATE LIMITING (anonymous login / OTP / password-reset endpoints)
+// --------------------------------------------------
+// Per client IP, on top of the per-mobile-number limits in OtpGuard. Generous on purpose:
+// several traders can share one public IP (offices, mobile carriers).
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.ContentType = "application/json";
+        await ctx.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Too many requests. Please try again after some time.\"}", ct);
+    };
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+    {
+        var path = ctx.Request.Path.Value ?? string.Empty;
+        var isAuth = path.Contains("/api/auth/", StringComparison.OrdinalIgnoreCase)
+                     || path.Contains("/api/sms/otp/", StringComparison.OrdinalIgnoreCase);
+        if (!isAuth)
+            return RateLimitPartition.GetNoLimiter("other");
+
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter("auth:" + ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+});
 
 // --------------------------------------------------
 // JWT AUTHENTICATION
@@ -179,6 +236,12 @@ builder.Services.AddSwaggerGen(c =>
 // --------------------------------------------------
 var app = builder.Build();
 
+// Payment-redirect key pair (see CryptoHelper): source is logged, key material never is.
+var paymentKeySource = CryptoHelper.Configure(
+    app.Configuration["PaymentRedirect:PublicKeyPem"], app.Configuration["PaymentRedirect:PrivateKeyPem"],
+    app.Configuration["PaymentRedirect:PublicKeyPath"], app.Configuration["PaymentRedirect:PrivateKeyPath"]);
+app.Logger.LogInformation("Payment redirect keys: {Source}", paymentKeySource);
+
 // --------------------------------------------------
 // GLOBAL ERROR HANDLING
 // --------------------------------------------------
@@ -261,6 +324,7 @@ app.UseHttpMethodOverride();
 
 app.UseRouting();
 app.UseCors("CorsPolicy");
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

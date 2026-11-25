@@ -26,12 +26,17 @@ public class LicenceApplicationController : ControllerBase
     private IDbConnection CreateConnection()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
-    // Traders may only work on their own applications (officers are unchanged).
-    private async Task<bool> TraderMayNotAccess(IDbConnection db, long licenceApplicationId)
-        => CallerAccess.IsTrader(User) && !await CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationId);
+    // Traders: only their own applications. Officers: only applications in their GBA jurisdiction.
+    private async Task<bool> TraderMayNotAccess(IDbConnection db, long licenceApplicationId,
+        ApplicationIdKind kind = ApplicationIdKind.Any)
+        => !await CallerAccess.MayAccessApplicationAsync(db, User, licenceApplicationId, kind);
 
     private bool TraderActsForSomeoneElse(long loginId)
         => CallerAccess.IsTrader(User) && CallerAccess.CallerId(User) != loginId;
+
+    private static string? InvalidHp(LicenceApplicationUpsertDto dto)
+        => LicenceFeeCalculator.ValidateHp(dto.PowerHP, "Seeking Power Licence (HP)")
+           ?? LicenceFeeCalculator.ValidateHp(dto.GeneratorHP, "Installed Generator (HP)");
 
     // ================= INSERT DRAFT =================
     [HttpPost("draft")]
@@ -41,8 +46,18 @@ public class LicenceApplicationController : ControllerBase
     {
         if (TraderActsForSomeoneElse(dto.LoginID))
             return Forbid();
+        // the entry origin is the trader too (the form sends the same id)
+        if (CallerAccess.IsTrader(User) && dto.EntryOriginLoginID != 0 && TraderActsForSomeoneElse(dto.EntryOriginLoginID))
+            return Forbid();
+        if (InvalidHp(dto) is string hpError)
+            return BadRequest(new { Message = hpError });
 
         using var db = CreateConnection();
+
+        // A draft may only be attached to a licence record the caller may use (stops a trader from
+        // linking someone else's record and thereby becoming its owner)
+        if (dto.TradeLicenceID > 0 && !await CallerAccess.MayAccessLicenceAsync(db, User, dto.TradeLicenceID))
+            return Forbid();
 
         var id = await db.ExecuteScalarAsync<long>(
             "usp_LicenceApplication_CRUD",
@@ -78,6 +93,8 @@ public class LicenceApplicationController : ControllerBase
             commandType: CommandType.StoredProcedure
         );
 
+        await PowerHpStore.SaveAsync(db, id, dto.PowerHP, dto.GeneratorHP, CallerAccess.CallerId(User));
+
         return Ok(new { LicenceApplicationID = id });
     }
 
@@ -88,8 +105,11 @@ public class LicenceApplicationController : ControllerBase
         [FromBody] LicenceApplicationUpsertDto dto,
         CancellationToken ct)
     {
+        if (InvalidHp(dto) is string hpError)
+            return BadRequest(new { Message = hpError });
+
         using var db = CreateConnection();
-        if (await TraderMayNotAccess(db, id))
+        if (await TraderMayNotAccess(db, id, ApplicationIdKind.Draft))
             return Forbid();
 
         db.Open();
@@ -134,6 +154,8 @@ public class LicenceApplicationController : ControllerBase
             transaction: transaction,
             commandType: CommandType.StoredProcedure
         );
+
+        await PowerHpStore.SaveAsync(db, id, dto.PowerHP, dto.GeneratorHP, CallerAccess.CallerId(User), transaction);
 
         transaction.Commit();
 
@@ -198,7 +220,7 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> DeleteDraft(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
-        if (await TraderMayNotAccess(db, id))
+        if (await TraderMayNotAccess(db, id, ApplicationIdKind.Draft))
             return Forbid();
 
         await db.ExecuteAsync(
@@ -219,7 +241,7 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> PaymentSuccess(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
-        if (await TraderMayNotAccess(db, id))
+        if (await TraderMayNotAccess(db, id, ApplicationIdKind.Draft))
             return Forbid();
 
         // 🔐 Never take "paid" from the browser: the gateway response must already have been
@@ -250,7 +272,7 @@ public class LicenceApplicationController : ControllerBase
     public async Task<IActionResult> FinalSubmit(long id, CancellationToken ct)
     {
         using var db = CreateConnection();
-        if (await TraderMayNotAccess(db, id))
+        if (await TraderMayNotAccess(db, id, ApplicationIdKind.Draft))
             return Forbid();
 
         // Payment-before-submission: only a gateway-verified payment may be submitted.
@@ -280,6 +302,10 @@ public class LicenceApplicationController : ControllerBase
                 Message = "No response from database."
             });
         }
+
+        // procedure internals (line number / procedure name) are not for the browser
+        result.ErrorLine = null;
+        result.ErrorProcedure = null!;
 
         // 📩 APP_RECEIVED SMS (only on the first successful submit, not on "already submitted")
         if (result.Submitted)

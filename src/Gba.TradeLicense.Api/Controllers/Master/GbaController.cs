@@ -162,6 +162,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
         // Assignments of several users at once (for the user list)
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpGet("user-jurisdiction")]
         public async Task<IActionResult> GetUserJurisdictions([FromQuery] string? loginIds)
         {
@@ -188,6 +189,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         [Gba.TradeLicense.Api.Services.StaffOnly]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpGet("user-jurisdiction/{loginId:int}")]
         public async Task<IActionResult> GetUserJurisdiction(int loginId)
         {
@@ -212,6 +214,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         // Replaces the user's active assignment (old rows are deactivated, never deleted)
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         [HttpPut("user-jurisdiction/{loginId:int}")]
         public async Task<IActionResult> SaveUserJurisdiction(int loginId, [FromBody] UserJurisdictionRequest req)
         {

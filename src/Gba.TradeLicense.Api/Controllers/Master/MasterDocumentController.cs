@@ -9,6 +9,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
     using Microsoft.Data.SqlClient;
 
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/master-documents")]
     public class MasterDocumentController : ControllerBase

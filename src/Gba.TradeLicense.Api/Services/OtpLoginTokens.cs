@@ -11,6 +11,7 @@ namespace Gba.TradeLicense.Api.Services
     public static class OtpLoginTokens
     {
         private static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(10);
+        private static readonly object Sync = new(); // check + remove as one step: a token logs in once
 
         private static string Key(string token) => "otp-login:" + token;
 
@@ -33,15 +34,18 @@ namespace Gba.TradeLicense.Api.Services
                 return false;
 
             var key = Key(token.Trim());
-            if (!cache.TryGetValue(key, out string? verifiedMobile))
-                return false;
-
             var expected = LastTenDigits(mobileNo);
-            if (string.IsNullOrEmpty(expected) || !string.Equals(verifiedMobile, expected, StringComparison.Ordinal))
-                return false;
+            lock (Sync)
+            {
+                if (!cache.TryGetValue(key, out string? verifiedMobile))
+                    return false;
 
-            cache.Remove(key);
-            return true;
+                if (string.IsNullOrEmpty(expected) || !string.Equals(verifiedMobile, expected, StringComparison.Ordinal))
+                    return false;
+
+                cache.Remove(key);
+                return true;
+            }
         }
     }
 }

@@ -32,7 +32,8 @@
 		<PackageReference Include="Microsoft.Extensions.Identity.Core" Version="8.0.8" />
 	</ItemGroup>
 
-	<!-- CryptoHelper reads these from <app>\Security\Keys at runtime (payment-success redirect) -->
+	<!-- Payment-redirect keys are NOT kept in source control any more: CryptoHelper takes them from
+	     configuration (PaymentRedirect:*), else from files already on the server, else generates one. -->
 	<ItemGroup>
 		<None Update="Security\Keys\*.pem" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>

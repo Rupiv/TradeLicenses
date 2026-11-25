@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.AdminOnly]
 [Gba.TradeLicense.Api.Services.StaffOnly]
 [Route("api/login-master")]
 public class LoginMasterController : ControllerBase
@@ -117,7 +118,7 @@ public class LoginMasterController : ControllerBase
                 dto.UserDesignationID,
                 dto.SakalaDO_Code,
                 dto.MobileNo,
-                dto.UpdatedBy
+                UpdatedBy = (int)(Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) ?? dto.UpdatedBy) // signed-in admin
             },
             commandType: CommandType.StoredProcedure
         );
@@ -200,7 +201,7 @@ public class LoginMasterController : ControllerBase
             {
                 Action = "DELETE",
                 loginID = id,
-                updatedby = updatedBy
+                updatedby = (int)(Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) ?? updatedBy) // signed-in admin
             },
             commandType: CommandType.StoredProcedure
         );

@@ -260,7 +260,7 @@ namespace Gba.TradeLicense.Infrastructure.Services.PaymentGateway
             }
             catch (Exception ex)
             {
-                result.Error = "Unable to reach payment gateway: " + ex.Message;
+                result.Error = "Unable to reach the payment gateway. Please try again."; // no exception text to the browser
             }
             return result;
         }
@@ -346,7 +346,7 @@ namespace Gba.TradeLicense.Infrastructure.Services.PaymentGateway
                 hash_string = hash_string + '|';
             }
             hash_string += salt;// appending SALT
-            Console.WriteLine(hash_string);
+            // (hash input contains the merchant salt - never write it to the console / logs)
             gen_hash = Easebuzz_Generatehash512(hash_string).ToLower();        //generating hash
             data.Add("hash", gen_hash);
 
@@ -398,7 +398,7 @@ namespace Gba.TradeLicense.Infrastructure.Services.PaymentGateway
                 hash_string = hash_string + '|';
             }
             hash_string += salt;// appending SALT
-            Console.WriteLine(hash_string);
+            // (hash input contains the merchant salt - never write it to the console / logs)
             gen_hash = Easebuzz_Generatehash512(hash_string).ToLower();        //generating hash
             data.Add("hash", gen_hash);
 

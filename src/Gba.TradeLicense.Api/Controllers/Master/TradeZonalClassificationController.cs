@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/trade-zonal-classification")]
     public class TradeZonalClassificationController : ControllerBase

@@ -6,6 +6,7 @@ using Dapper;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/assembly-constituencies")]
     public class AssemblyConstituencyController : ControllerBase

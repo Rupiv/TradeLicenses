@@ -58,9 +58,15 @@ public class SmsService : ISmsService
 
         var smsCfg = _config.GetSection("Sms");
 
+        // Never write a usable OTP to the application log (same masking as the DB log below)
+        bool otpMessage = ((string?)template.SmsType)?.Contains("OTP", StringComparison.OrdinalIgnoreCase) == true
+                          || templateKey.StartsWith("OTP", StringComparison.OrdinalIgnoreCase);
+        string logContent = otpMessage && variables.Length > 0 && !string.IsNullOrEmpty(variables[0])
+            ? message.Replace(variables[0], new string('*', variables[0].Length))
+            : message;
         _logger.LogInformation(
             "Sending SMS {TemplateKey}: SmsType={SmsType}, TemplateId={TemplateId}, Content=[{Content}]",
-            templateKey, (string)template.SmsType, (string)template.TemplateId, message);
+            templateKey, (string)template.SmsType, (string)template.TemplateId, logContent);
 
         string smsType = (string)template.SmsType;
         string templateId = (string)template.TemplateId;

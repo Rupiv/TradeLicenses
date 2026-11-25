@@ -35,8 +35,9 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
 
                 await con.OpenAsync();
 
-                // Traders: only the licence of their own application (officers unchanged)
-                if (Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User))
+                // Traders: only the licence of their own application. Officers: only inside their
+                // GBA jurisdiction. Admin: all.
+                if (!Gba.TradeLicense.Api.Services.CallerAccess.IsAdmin(User))
                 {
                     var ids = await con.QueryAsync<long>(
                         "SELECT CAST(licenceApplicationID AS BIGINT) FROM dbo.Licence_Application WHERE applicationNumber = @applicationNumber",
@@ -44,7 +45,7 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
                     var owns = false;
                     foreach (var id in ids)
                     {
-                        if (await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(
+                        if (await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(
                                 con, User, id, Gba.TradeLicense.Api.Services.ApplicationIdKind.Submitted))
                         {
                             owns = true;
@@ -157,7 +158,7 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
                 // Handles RAISERROR from stored procedure
                 return BadRequest(new
                 {
-                    message = ex.Message
+                    message = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
                 });
             }
         }

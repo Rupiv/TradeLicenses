@@ -7,6 +7,7 @@ using Dapper;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/master/licence-status")]
     public class LicenceApplicationStatusController : ControllerBase
@@ -19,7 +20,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         private IDbConnection Db()
-            => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            => new SqlConnection(_config.GetConnectionString("Default"));
 
         [HttpGet]
         public async Task<IActionResult> GetAll()

@@ -39,6 +39,8 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         public async Task<IActionResult> GetApplications(
     [FromBody] ApproverApplicationRequest request)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            request.LoginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, request.LoginId);
             // ✅ Step 1: Model validation
             if (!ModelState.IsValid)
             {
@@ -125,6 +127,8 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
       int? wardId,
       string? applicationNumber)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            loginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, loginId);
             if (await _gbaQueue.HasAssignmentAsync(loginId))
             {
                 var c = await _gbaQueue.GetStatusCountsAsync(loginId, QueueStatuses, mohId, wardId);
@@ -183,6 +187,8 @@ namespace Gba.TradeLicense.Api.Controllers.Approver
         [HttpGet("lookup")]
         public async Task<IActionResult> GetLookup(int loginId)
         {
+            // Officers read their own queue only (admin workflow pages keep the requested one)
+            loginId = Gba.TradeLicense.Api.Services.CallerAccess.QueueLoginId(User, loginId);
             // GBA-assigned officer: only the assigned GBA zone(s) and ward(s)
             if (await _gbaQueue.HasAssignmentAsync(loginId))
             {

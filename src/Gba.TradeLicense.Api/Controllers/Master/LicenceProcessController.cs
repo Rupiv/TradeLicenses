@@ -67,6 +67,11 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
             using var db = Db();
 
+            // Approve / reject / forward only inside the officer's GBA jurisdiction
+            if (!await Gba.TradeLicense.Api.Services.CallerAccess.OfficerMayAccessAsync(
+                    db, User, request.LicenceApplicationID, Gba.TradeLicense.Api.Services.ApplicationIdKind.Submitted))
+                return Forbid();
+
             var result = await db.QueryFirstOrDefaultAsync<dynamic>(
                 "usp_Licence_SubmitAction",
                 new
@@ -107,8 +112,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         {
             using var db = Db();
 
-            if (Gba.TradeLicense.Api.Services.CallerAccess.IsTrader(User) &&
-                !await Gba.TradeLicense.Api.Services.CallerAccess.OwnsApplicationAsync(db, User, licenceApplicationID))
+            if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(db, User, licenceApplicationID))
                 return Forbid();
 
             var result = await db.QueryAsync<ApplicationTimelineDto>(
@@ -132,6 +136,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
 
 
         [HttpPost]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         public async Task<IActionResult> Create(LicenceProcessDto dto)
         {
             using var db = Db();
@@ -149,6 +154,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         [HttpPut]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         public async Task<IActionResult> Update(LicenceProcessDto dto)
         {
             using var db = Db();
@@ -167,6 +173,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
         }
 
         [HttpDelete("{id}")]
+        [Gba.TradeLicense.Api.Services.AdminOnly]
         public async Task<IActionResult> Delete(int id)
         {
             using var db = Db();

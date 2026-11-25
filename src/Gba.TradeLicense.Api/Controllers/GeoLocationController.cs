@@ -100,7 +100,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 {
                     code = "KGIS_FAILED",
                     message = "KGIS API failed",
-                    details = responseText
+                    details = "The KGIS road service returned an error."
                 });
             }
 
@@ -117,12 +117,16 @@ namespace Gba.TradeLicense.Api.Controllers
 
         // ================= GET SAVED GEO LOCATION =================
         [HttpGet("get/{licenceApplicationID}")]
-        public IActionResult GetGeoLocation(int licenceApplicationID)
+        public async Task<IActionResult> GetGeoLocation(int licenceApplicationID)
         {
             GeoLocationDto result = null;
 
             using SqlConnection con =
                 new SqlConnection(_config.GetConnectionString("Default"));
+
+            // Traders: own applications only; officers: their GBA jurisdiction
+            if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(con, User, licenceApplicationID))
+                return Forbid();
 
             using SqlCommand cmd =
                 new SqlCommand("usp_LicenceApplication_Geo_Get", con);
@@ -155,7 +159,7 @@ namespace Gba.TradeLicense.Api.Controllers
 
         // ================= CONFIRM & SAVE =================
         [HttpPost("confirm-save")]
-        public IActionResult ConfirmAndSave(
+        public async Task<IActionResult> ConfirmAndSave(
             [FromBody] LicenceGeoConfirmDto model)
         {
             if (!ModelState.IsValid)
@@ -163,6 +167,13 @@ namespace Gba.TradeLicense.Api.Controllers
 
             using SqlConnection con =
                 new SqlConnection(_config.GetConnectionString("Default"));
+
+            // A trader may only set the location of their own application (officers: jurisdiction)
+            if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(con, User, model.LicenceApplicationID))
+                return Forbid();
+            // Recorded against the signed-in user (the form already sends the token's own id)
+            if (Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) is long caller && caller > 0 && caller <= int.MaxValue)
+                model.LoginID = (int)caller;
 
             using SqlCommand cmd =
                 new SqlCommand("usp_LicenceApplication_Geo_Save", con);

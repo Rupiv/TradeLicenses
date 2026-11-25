@@ -52,18 +52,61 @@ namespace Gba.TradeLicense.Infrastructure.Security
             return rsa.Decrypt(Convert.FromBase64String(encryptedData), RSAEncryptionPadding.OaepSHA256);
         }
 
-        // 📂 READ PUBLIC KEY
-        public static string GetPublicKey()
+        // Key pair for the payment-success redirect (this API encrypts the payload, the same API
+        // decrypts it a few seconds later; it never leaves the server). Supplied by configuration
+        // (Program.cs -> Configure), never from source control:
+        //   PaymentRedirect:PublicKeyPem / PrivateKeyPem   (PEM text), or
+        //   PaymentRedirect:PublicKeyPath / PrivateKeyPath (PEM files outside the web root)
+        // If neither is configured, the files an older deployment left in <app>\Security\Keys are
+        // used; failing that, a fresh in-memory key pair is generated at start-up (fine for one
+        // server: a redirect is decrypted seconds after it is made).
+        private static string? _publicKeyPem;
+        private static string? _privateKeyPem;
+        private static readonly object KeySync = new();
+
+        /// <summary>Returns a short description of where the keys came from (no key material).</summary>
+        public static string Configure(string? publicKeyPem, string? privateKeyPem, string? publicKeyPath, string? privateKeyPath)
         {
-            var path = Path.Combine(AppContext.BaseDirectory, "Security", "Keys", "public_key.pem");
-            return File.ReadAllText(path);
+            lock (KeySync)
+            {
+                if (!string.IsNullOrWhiteSpace(publicKeyPem) && !string.IsNullOrWhiteSpace(privateKeyPem))
+                {
+                    _publicKeyPem = publicKeyPem; _privateKeyPem = privateKeyPem;
+                    return "configuration (PEM)";
+                }
+                if (!string.IsNullOrWhiteSpace(publicKeyPath) && !string.IsNullOrWhiteSpace(privateKeyPath))
+                {
+                    _publicKeyPem = File.ReadAllText(publicKeyPath); _privateKeyPem = File.ReadAllText(privateKeyPath);
+                    return "configuration (key files)";
+                }
+
+                var legacyPublic = Path.Combine(AppContext.BaseDirectory, "Security", "Keys", "public_key.pem");
+                var legacyPrivate = Path.Combine(AppContext.BaseDirectory, "Security", "Keys", "private_key.pem");
+                if (File.Exists(legacyPublic) && File.Exists(legacyPrivate))
+                {
+                    _publicKeyPem = File.ReadAllText(legacyPublic); _privateKeyPem = File.ReadAllText(legacyPrivate);
+                    return "legacy Security/Keys files (rotate: this key was committed to source control)";
+                }
+
+                using var rsa = RSA.Create(2048);
+                _publicKeyPem = rsa.ExportSubjectPublicKeyInfoPem();
+                _privateKeyPem = rsa.ExportPkcs8PrivateKeyPem();
+                return "generated in memory at start-up";
+            }
         }
 
-        // 📂 READ PRIVATE KEY
+        // 📂 PUBLIC KEY
+        public static string GetPublicKey()
+        {
+            if (_publicKeyPem == null) Configure(null, null, null, null);
+            return _publicKeyPem!;
+        }
+
+        // 📂 PRIVATE KEY
         public static string GetPrivateKey()
         {
-            var path = Path.Combine(AppContext.BaseDirectory, "Security", "Keys", "private_key.pem");
-            return File.ReadAllText(path);
+            if (_privateKeyPem == null) Configure(null, null, null, null);
+            return _privateKeyPem!;
         }
     }
 }

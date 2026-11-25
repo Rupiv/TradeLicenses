@@ -7,6 +7,7 @@ using Dapper;
 namespace Gba.TradeLicense.Api.Controllers.Master
 {
     [ApiController]
+    [Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
     [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
     [Route("api/bbmp-wards")]
     public class BBMPWardController : ControllerBase
@@ -109,7 +110,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
                 return StatusCode(500, new
                 {
                     message = "Insert failed",
-                    detail = ex.Message
+                    detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
                 });
             }
         }
@@ -144,7 +145,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
                 return StatusCode(500, new
                 {
                     message = "Update failed",
-                    detail = ex.Message
+                    detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
                 });
             }
         }
@@ -174,7 +175,7 @@ namespace Gba.TradeLicense.Api.Controllers.Master
                 return StatusCode(500, new
                 {
                     message = "Delete failed",
-                    detail = ex.Message
+                    detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
                 });
             }
         }

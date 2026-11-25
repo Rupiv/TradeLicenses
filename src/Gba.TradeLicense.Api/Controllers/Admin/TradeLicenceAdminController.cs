@@ -54,6 +54,13 @@ namespace TradeLicence.API.Controllers
 
             using var con = Db();
 
+            // Officers: only their assigned corporation(s), whatever the request says (admin unchanged)
+            var (scopedCorporation, deny) = Gba.TradeLicense.Api.Services.ReportScope.ResolveCorporation(
+                await Gba.TradeLicense.Api.Services.ReportScope.GetAsync(con, User), corporationId);
+            if (deny != null)
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = deny });
+            corporationId = scopedCorporation;
+
             var parameters = new DynamicParameters();
 
             parameters.Add("@Action", "LIST");   // ✅ IMPORTANT
@@ -104,6 +111,12 @@ namespace TradeLicence.API.Controllers
     int? corporationId)
         {
             using var con = Db();
+
+            var (scopedCorporation, deny) = Gba.TradeLicense.Api.Services.ReportScope.ResolveCorporation(
+                await Gba.TradeLicense.Api.Services.ReportScope.GetAsync(con, User), corporationId);
+            if (deny != null)
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = deny });
+            corporationId = scopedCorporation;
 
             var parameters = new DynamicParameters();
 
@@ -189,6 +202,10 @@ namespace TradeLicence.API.Controllers
         public async Task<IActionResult> GetApplicationById(int applicationId)
         {
             using var con = Db();
+
+            if (!await Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(
+                    con, User, applicationId, Gba.TradeLicense.Api.Services.ApplicationIdKind.Submitted))
+                return Forbid();
 
             var data = await con.QueryFirstOrDefaultAsync(
                 "SELECT * FROM Licence_Application WHERE licenceApplicationID = @applicationId",

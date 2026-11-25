@@ -8,3 +8,12 @@ obj/
 /src/Gba.TradeLicense.Api/Uploads/LicenceDocuments/2026/01
 /src/Gba.TradeLicense.Api/Uploads/LicenceDocuments/2026/02
 .zip/
+
+# secrets: never commit keys or local secret files
+**/Security/Keys/*.pem
+appsettings.*.local.json
+*.pubxml.user
+
+# customer data: never commit uploaded documents or generated certificates
+src/Gba.TradeLicense.Api/Uploads/
+src/Gba.TradeLicense.Api/wwwroot/uploads/

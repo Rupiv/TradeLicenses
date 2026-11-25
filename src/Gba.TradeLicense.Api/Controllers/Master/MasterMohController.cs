@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 [ApiController]
+[Gba.TradeLicense.Api.Services.AdminOnly(WritesOnly = true)]
 [Gba.TradeLicense.Api.Services.StaffOnly(WritesOnly = true)]
 [Route("api/master-moh")]
 public class MasterMohController : ControllerBase
@@ -37,7 +38,7 @@ public class MasterMohController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            return StatusCode(500, new { error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.") });
         }
     }
 
@@ -62,7 +63,7 @@ public class MasterMohController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            return StatusCode(500, new { error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.") });
         }
     }
 
@@ -103,7 +104,7 @@ public class MasterMohController : ControllerBase
             return StatusCode(500, new
             {
                 message = "SQL Error",
-                detail = ex.Message
+                detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
             });
         }
         catch (Exception ex)
@@ -111,7 +112,7 @@ public class MasterMohController : ControllerBase
             return StatusCode(500, new
             {
                 message = "Server Error",
-                detail = ex.Message
+                detail = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.")
             });
         }
     }
@@ -151,7 +152,7 @@ public class MasterMohController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            return StatusCode(500, new { error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.") });
         }
     }
 
@@ -173,7 +174,7 @@ public class MasterMohController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            return StatusCode(500, new { error = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "The request could not be processed.") });
         }
     }
 }

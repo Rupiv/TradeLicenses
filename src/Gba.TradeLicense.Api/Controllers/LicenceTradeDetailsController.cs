@@ -21,6 +21,13 @@ public class LicenceTradeDetailsController : ControllerBase
     private IDbConnection CreateConnection()
         => new SqlConnection(_config.GetConnectionString("Default"));
 
+    // Traders: only their own drafts. Officers: their GBA jurisdiction. Admin: all.
+    // (trade details belong to drafts: Licence_Application_Temp ids only)
+    private Task<bool> MayAccess(IDbConnection db, long licenceApplicationId)
+        => Gba.TradeLicense.Api.Services.CallerAccess.MayAccessApplicationAsync(db, User, licenceApplicationId,
+               Gba.TradeLicense.Api.Services.ApplicationIdKind.Draft);
+
+
     // ================= INSERT TEMP =================
     [HttpPost("temp")]
     [HttpPost("draft")]
@@ -29,6 +36,8 @@ public class LicenceTradeDetailsController : ControllerBase
      CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (!await MayAccess(db, dto.LicenceApplicationID))
+            return Forbid();
 
         var id = await db.ExecuteScalarAsync<long>(
             "usp_LicenceTradeDetails_CRUD",
@@ -52,9 +61,14 @@ public class LicenceTradeDetailsController : ControllerBase
     public async Task<IActionResult> GetTempFullDetails(long licenceApplicationID, CancellationToken ct)
     {
         using var db = CreateConnection();
+        if (!await MayAccess(db, licenceApplicationID))
+            return Forbid();
 
         try
         {
+            // Read before the multi-result reader below occupies the connection
+            var powerDetails = await Gba.TradeLicense.Api.Services.PowerHpStore.GetAsync(db, licenceApplicationID);
+
             using var multi = await db.QueryMultipleAsync(
                 "usp_LicenceApplicationTemp_GetFullDetails",
                 new { licenceApplicationID },
@@ -81,14 +95,16 @@ public class LicenceTradeDetailsController : ControllerBase
                 Application = application,
                 TradeDetails = tradeDetails,
                 Documents = documents,
-                GeoLocations = geoLocations
+                GeoLocations = geoLocations,
+                // Declared HP (null for drafts saved before HP was stored)
+                PowerDetails = powerDetails
             });
         }
         catch (SqlException ex)
         {
             return BadRequest(new
             {
-                Message = ex.Message,
+                Message = Gba.TradeLicense.Api.Services.CallerAccess.SafeDbMessage(ex, "Application details could not be loaded."),
                 LicenceApplicationID = licenceApplicationID
             });
         }
@@ -144,6 +160,8 @@ public class LicenceTradeDetailsController : ControllerBase
     public async Task<IActionResult> GetByApplicationId(long licenceApplicationID)
     {
         using var db = CreateConnection();
+        if (!await MayAccess(db, licenceApplicationID))
+            return Forbid();
 
         var list = await db.QueryAsync(
             "usp_LicenceTradeDetails_CRUD",
@@ -162,6 +180,8 @@ public class LicenceTradeDetailsController : ControllerBase
     public async Task<IActionResult> FinalSubmit(long licenceApplicationID)
     {
         using var db = CreateConnection();
+        if (!await MayAccess(db, licenceApplicationID))
+            return Forbid();
 
         await db.ExecuteAsync(
             "usp_LicenceTradeDetails_CRUD",
