@@ -182,7 +182,15 @@ namespace Gba.TradeLicense.Api.Services
                                   OR EXISTS (SELECT 1 FROM dbo.Licence_Application WHERE tradeLicenceID = @id)
                              THEN 1 ELSE 0 END",
                     new { id = tradeLicenceId });
-                return linked == 0;
+                if (linked == 1) return false;
+
+                // Unlinked record (created, not yet attached to an application). Once the owner table
+                // exists (GBA_LicenceOwner_Migration.sql) only its recorded creator may use it; records
+                // created before that have no owner and are not opened to anyone. Without the table:
+                // previous behaviour.
+                var (tableExists, owner) = await LicenceOwnerStore.GetOwnerAsync(db, tradeLicenceId);
+                if (!tableExists) return true;
+                return owner != null && owner == CallerId(user);
             }
 
             var applications = (await db.QueryAsync<long>(

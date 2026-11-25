@@ -101,6 +101,10 @@ public class TradeLicenceController : ControllerBase
         if (gbaWard != null)
             await _gba.SaveDraftLocationAsync(id, gbaWard, LoginId());
 
+        // Owner of the new record = the signed-in user (from the token, never from the request)
+        if (CallerAccess.CallerId(User) is long creator)
+            await LicenceOwnerStore.RecordAsync(db, id, creator);
+
         return Ok(new { tradeLicenceID = id });
     }
 
@@ -173,7 +177,7 @@ public class TradeLicenceController : ControllerBase
                     DocumentID = Convert.ToInt32(doc.DocumentID),
                     DocumentName = doc.documentName,
                     FileName = doc.FileName,
-                    FilePath = doc.FilePath
+                    FilePath = SafePaths.ToPublic(doc.FilePath)
                 });
             }
 

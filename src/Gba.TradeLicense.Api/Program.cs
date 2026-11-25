@@ -15,6 +15,9 @@ using System;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.RateLimiting;
+using Serilog;
+using Serilog.Events;
+using Serilog.Formatting.Compact;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +43,33 @@ RequireSetting(builder.Configuration, "ConnectionStrings:Default");
 RequireSetting(builder.Configuration, "Jwt:Key", 32);
 RequireSetting(builder.Configuration, "Jwt:Issuer");
 RequireSetting(builder.Configuration, "Jwt:Audience");
+
+// --------------------------------------------------
+// LOGGING (structured JSON files + console; sensitive values scrubbed)
+// --------------------------------------------------
+// Files: Logging:File:Path (default <app>\logs\api-<date>.json), one file per day, 30 days kept,
+// max 50 MB per file. Request bodies, headers and query strings are never logged; framework request
+// logging is reduced to warnings (its "Request starting" lines contain full URLs with query strings).
+builder.Host.UseSerilog((ctx, services, cfg) =>
+{
+    var path = ctx.Configuration["Logging:File:Path"];
+    if (string.IsNullOrWhiteSpace(path))
+        path = Path.Combine(ctx.HostingEnvironment.ContentRootPath, "logs", "api-.json");
+
+    cfg.MinimumLevel.Information()
+       .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+       .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+       .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+       .Enrich.FromLogContext()
+       .Enrich.With(new Gba.TradeLicense.Api.Services.SensitiveDataEnricher())
+       .WriteTo.Console()
+       .WriteTo.File(new CompactJsonFormatter(), path,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: ctx.Configuration.GetValue<int?>("Logging:File:RetainedDays") ?? 30,
+            fileSizeLimitBytes: 50L * 1024 * 1024,
+            rollOnFileSizeLimit: true,
+            shared: true);
+});
 
 // --------------------------------------------------
 // CORS
@@ -102,6 +132,13 @@ builder.Services.AddScoped<SMSHttpPostClient>();
 builder.Services.AddSingleton<BbmpBoundaryService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<Gba.TradeLicense.Api.Services.OtpGuard>();
+builder.Services.AddHttpClient(Gba.TradeLicense.Api.Services.RecaptchaVerifier.HttpClientName,
+    c => c.Timeout = TimeSpan.FromSeconds(10));
+builder.Services.AddScoped<Gba.TradeLicense.Api.Services.RecaptchaVerifier>();
+
+// Health: /health/live (process up) and /health/ready (database reachable). Status text only.
+builder.Services.AddHealthChecks()
+    .AddCheck<Gba.TradeLicense.Api.Services.DatabaseHealthCheck>("database", tags: new[] { "ready" });
 
 // --------------------------------------------------
 // RATE LIMITING (anonymous login / OTP / password-reset endpoints)
@@ -236,6 +273,15 @@ builder.Services.AddSwaggerGen(c =>
 // --------------------------------------------------
 var app = builder.Build();
 
+app.UseMiddleware<Gba.TradeLicense.Api.Services.CorrelationIdMiddleware>();
+
+// One line per request (also for requests rejected by authentication / rate limiting):
+// method, path WITHOUT query string, status, duration, correlation id
+app.UseSerilogRequestLogging(o =>
+{
+    o.MessageTemplate = "HTTP {RequestMethod} {RequestPath} -> {StatusCode} in {Elapsed:0} ms";
+});
+
 // Payment-redirect key pair (see CryptoHelper): source is logged, key material never is.
 var paymentKeySource = CryptoHelper.Configure(
     app.Configuration["PaymentRedirect:PublicKeyPem"], app.Configuration["PaymentRedirect:PrivateKeyPem"],
@@ -254,7 +300,18 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/error");
+    // No exception details to callers; the exception is logged by the middleware with the
+    // correlation id the caller receives.
+    app.UseExceptionHandler(errorApp => errorApp.Run(async ctx =>
+    {
+        ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsJsonAsync(new
+        {
+            message = "Something went wrong. Please try again.",
+            correlationId = ctx.TraceIdentifier
+        });
+    }));
 }
 
 // --------------------------------------------------
@@ -303,15 +360,18 @@ app.UseHsts();
 app.UseHttpsRedirection();
 
 // --------------------------------------------------
-// SWAGGER (🔥 ENABLE IN ALL ENV)
+// SWAGGER: development only (or Swagger:Enabled = true on a non-public test server)
 // --------------------------------------------------
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
-    // Relative path: works locally (/swagger) and on IIS under the /api application (/api/swagger)
-    c.SwaggerEndpoint("v1/swagger.json", "GBA Trade License API V1");
-    c.RoutePrefix = "swagger";
-});
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        // Relative path: works locally (/swagger) and on IIS under the /api application (/api/swagger)
+        c.SwaggerEndpoint("v1/swagger.json", "GBA Trade License API V1");
+        c.RoutePrefix = "swagger";
+    });
+}
 
 // --------------------------------------------------
 // PIPELINE
@@ -332,18 +392,28 @@ app.UseAuthorization();
 // --------------------------------------------------
 // LOGGING
 // --------------------------------------------------
-app.Use(async (context, next) =>
-{
-    var sw = System.Diagnostics.Stopwatch.StartNew();
-    await next();
-    sw.Stop();
-
-    Console.WriteLine($"{context.Request.Method} {context.Request.Path} - {sw.ElapsedMilliseconds} ms");
-});
 
 // --------------------------------------------------
 // ENDPOINTS
 // --------------------------------------------------
 app.MapControllers();
+
+// Anonymous health endpoints (outside MVC, so the global [Authorize] filter does not apply).
+// Only "Healthy" / "Unhealthy" is returned - no versions, paths, server names or exception text.
+static Task WriteHealthStatus(HttpContext ctx, Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport report)
+{
+    ctx.Response.ContentType = "text/plain";
+    return ctx.Response.WriteAsync(report.Status.ToString());
+}
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false, // process only
+    ResponseWriter = WriteHealthStatus
+});
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = c => c.Tags.Contains("ready"),
+    ResponseWriter = WriteHealthStatus
+});
 
 app.Run();

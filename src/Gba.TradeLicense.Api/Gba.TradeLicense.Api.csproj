@@ -25,6 +25,7 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" PrivateAssets="all" />
 
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+		<PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
 	</ItemGroup>
 
 	<!-- Customer data is never packaged: licence certificates (wwwroot/uploads) and uploaded documents

@@ -14,7 +14,7 @@ missing setting) when `ConnectionStrings:Default`, `Jwt:Key` (min. 32 characters
 | `ConnectionStrings:Default` | `ConnectionStrings__Default` | every controller / service (SQL Server) |
 | `Jwt:Key` | `Jwt__Key` | `Program.cs` (token validation), `JwtTokenService` (signing) |
 | `Otp:Secret` | `Otp__Secret` | `AuthService` OTP hashing (falls back to `Jwt:Key`) |
-| `ReCaptcha:SecretKey` | `ReCaptcha__SecretKey` | `AuthController.IsCaptchaValid` |
+| `ReCaptcha:SecretKey` | `ReCaptcha__SecretKey` | `Services/RecaptchaVerifier` |
 | `Sms:Password`, `Sms:SecureKey` | `Sms__Password`, `Sms__SecureKey` | `SmsService` / `SMSHttpPostClient` (CDAC MSDG gateway) |
 | `PaymentRedirect:PrivateKeyPath` + `PublicKeyPath` (or `...Pem`) | `PaymentRedirect__PrivateKeyPath`, ... | `CryptoHelper` (payment-success redirect payload) |
 
@@ -27,14 +27,18 @@ missing setting) when `ConnectionStrings:Default`, `Jwt:Key` (min. 32 characters
 | `Jwt:Issuer`, `Jwt:Audience` | no | yes (start-up check) | in `appsettings.json` |
 | `Jwt:AccessTokenMinutes` | no | no | session length; in `appsettings.json` |
 | `Otp:Secret` | yes | recommended | falls back to `Jwt:Key` |
-| `ReCaptcha:SecretKey` | yes | when CAPTCHA is enabled | |
-| `ReCaptcha:BypassValidation` | no | **must be unset/false in production** | dev only |
+| `ReCaptcha:SecretKey` | yes | **yes** (logins fail closed without it) | the literal token `test` is no longer accepted outside Development |
+| `ReCaptcha:BypassValidation` | no | **must be unset/false in production** | honoured only when ASPNETCORE_ENVIRONMENT=Development |
+| `ReCaptcha:AllowedHostnames` | no | recommended | comma list; token must have been issued for one of these hosts |
 | `Sms:Username`, `Sms:SenderId` | no | yes for SMS | in `appsettings.json` |
 | `Sms:Password`, `Sms:SecureKey` | yes | yes for SMS | |
 | `Sms:CorporationName` | no | no | text in OTP SMS (default "BBMP") |
 | `Easebuzz:SuccessUrl`, `Easebuzz:FailureUrl`, `Easebuzz:FrontendBaseUrl` | no | no | used only when on the request's own domain, otherwise built from the request |
 | `PaymentRedirect:PublicKeyPem` + `PrivateKeyPem`, or `...Path` | yes | no (see below) | |
 | `KarnatakaSms:*` | yes | no | `KarnatakaSmsService` is registered but not called anywhere |
+| `Logging:File:Path` | no | no | JSON log files (default `<app>\logs\api-.json`, one file per day) |
+| `Logging:File:RetainedDays` | no | no | default 30 |
+| `Swagger:Enabled` | no | **must not be set in production** | Swagger is on in Development only |
 
 Easebuzz merchant key / salt are not in configuration: they are rows in `dbo.Payment_Gateway_Config`
 (one per corporation) and are therefore protected only by the database credentials.

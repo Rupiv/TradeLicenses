@@ -23,15 +23,17 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _config;
     private readonly IMemoryCache _cache;
     private readonly Gba.TradeLicense.Api.Services.OtpGuard _otpGuard;
+    private readonly Gba.TradeLicense.Api.Services.RecaptchaVerifier _captcha;
 
     public AuthController(IAuthService authService, ISmsService sms, IConfiguration config, IMemoryCache cache,
-        Gba.TradeLicense.Api.Services.OtpGuard otpGuard)
+        Gba.TradeLicense.Api.Services.OtpGuard otpGuard, Gba.TradeLicense.Api.Services.RecaptchaVerifier captcha)
     {
         _authService = authService;
         _sms = sms;
         _config = config;
         _cache = cache;
         _otpGuard = otpGuard;
+        _captcha = captcha;
     }
     private IDbConnection Db()
              => new SqlConnection(_config.GetConnectionString("Default"));
@@ -106,11 +108,12 @@ public class AuthController : ControllerBase
             });
         }
 
-        if (!await IsCaptchaValid(dto.CaptchaToken))
+        var captcha = await _captcha.VerifyAsync(dto.CaptchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
+        if (!captcha.IsValid)
         {
             return BadRequest(new
             {
-                Message = "Invalid CAPTCHA"
+                Message = captcha.Message
             });
         }
 
@@ -138,42 +141,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    // ----------------- Google reCAPTCHA check -----------------
-    private async Task<bool> IsCaptchaValid(string? token)
-    {
-        // Set ReCaptcha:BypassValidation = true only for local/dev
-        if (_config.GetValue<bool>("ReCaptcha:BypassValidation"))
-            return true;
-
-        if (string.IsNullOrEmpty(token))
-            return false;
-
-        // Same as live build: frontend sends "test" when captcha is disabled
-        if (token == "test")
-            return true;
-
-        try
-        {
-            var secret = _config["ReCaptcha:SecretKey"];
-            using var client = new HttpClient();
-            // secret + token in the POST body (form-encoded), not in a URL that proxies / logs can record
-            var response = await client.PostAsync(
-                "https://www.google.com/recaptcha/api/siteverify",
-                new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["secret"] = secret ?? string.Empty,
-                    ["response"] = token
-                }));
-            var json = await response.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(json);
-            return doc.RootElement.TryGetProperty("success", out var success) && success.GetBoolean();
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    // CAPTCHA: Services/RecaptchaVerifier (provider check, fails closed; no 'test' token in any environment)
 
 
 
@@ -188,9 +156,10 @@ public class AuthController : ControllerBase
             return BadRequest(new { Error = "Username/Phone and Password are required." });
         }
 
-        if (!await IsCaptchaValid(request.CaptchaToken))
+        var captcha = await _captcha.VerifyAsync(request.CaptchaToken, HttpContext.Connection.RemoteIpAddress?.ToString(), ct);
+        if (!captcha.IsValid)
         {
-            return BadRequest(new { Error = "Invalid CAPTCHA" });
+            return BadRequest(new { Error = captcha.Message });
         }
 
         // ✅ Capture IP & Browser SERVER-SIDE (trusted)

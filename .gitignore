@@ -17,3 +17,6 @@ appsettings.*.local.json
 # customer data: never commit uploaded documents or generated certificates
 src/Gba.TradeLicense.Api/Uploads/
 src/Gba.TradeLicense.Api/wwwroot/uploads/
+
+# runtime logs (Serilog file sink)
+src/Gba.TradeLicense.Api/logs/

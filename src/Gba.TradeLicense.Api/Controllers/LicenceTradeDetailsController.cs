@@ -78,6 +78,7 @@ public class LicenceTradeDetailsController : ControllerBase
             var application = (await multi.ReadAsync<dynamic>()).FirstOrDefault();
             var tradeDetails = (await multi.ReadAsync<dynamic>()).ToList();
             var documents = (await multi.ReadAsync<dynamic>()).ToList();
+            Gba.TradeLicense.Api.Services.SafePaths.SanitizeRows(documents); // no physical server paths
             var geoLocations = (await multi.ReadAsync<dynamic>()).ToList();
 
             if (application == null)

@@ -153,3 +153,8 @@ GO
 /* 8. Declared power / generator HP (GBA_PowerHP_Migration.sql) */
 SELECT 'power HP table' AS [check],
        CASE WHEN OBJECT_ID('dbo.Licence_Application_PowerHP', 'U') IS NULL THEN 'MISSING - run GBA_PowerHP_Migration.sql' ELSE 'ok' END AS status;
+GO
+
+/* 9. Owner of draft licence records (GBA_LicenceOwner_Migration.sql, D6) */
+SELECT 'draft owner table' AS [check],
+       CASE WHEN OBJECT_ID('dbo.Licence_Master_Temp_Owner', 'U') IS NULL THEN 'MISSING - run GBA_LicenceOwner_Migration.sql (after approval)' ELSE 'ok' END AS status;

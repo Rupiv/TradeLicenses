@@ -440,7 +440,7 @@ public class LicenceApplicationController : ControllerBase
                             ApplicationDocumentID = d.First().ApplicationDocumentID,
                             documentName = d.First().documentName,
                             FileName = d.First().FileName,
-                            FilePath = d.First().FilePath,
+                            FilePath = SafePaths.ToPublic(d.First().FilePath),
                             FileExtension = d.First().FileExtension,
                             FileSizeKB = d.First().FileSizeKB,
                             DocumentIsActive = d.First().DocumentIsActive

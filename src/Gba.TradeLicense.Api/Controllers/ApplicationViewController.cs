@@ -262,6 +262,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 message = (string?)null
             }).ToList();
 
+            SafePaths.SanitizeRows(documents); // no physical server paths in the response
             var paidTotal = payments.Where(p => p.status == "SUCCESS").Sum(p => p.amount);
             var totalTradeFee = trades.Sum(t => (decimal)(t.tradeFee ?? 0m));
 
@@ -464,6 +465,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 .OrderByDescending(p => p.initiatedOn)
                 .ToList();
 
+            SafePaths.SanitizeRows(documents); // no physical server paths in the response
             var totalTradeFee = trades.Sum(t => (decimal)(t.tradeFee ?? 0m));
             var paid = payments.FirstOrDefault(p => string.Equals(p.status, "SUCCESS", StringComparison.OrdinalIgnoreCase));
 
