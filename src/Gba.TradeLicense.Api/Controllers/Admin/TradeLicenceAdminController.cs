@@ -54,12 +54,29 @@ namespace TradeLicence.API.Controllers
 
             using var con = Db();
 
-            // Officers: only their assigned corporation(s), whatever the request says (admin unchanged)
-            var (scopedCorporation, deny) = Gba.TradeLicense.Api.Services.ReportScope.ResolveCorporation(
-                await Gba.TradeLicense.Api.Services.ReportScope.GetAsync(con, User), corporationId);
-            if (deny != null)
-                return StatusCode(StatusCodes.Status403Forbidden, new { message = deny });
-            corporationId = scopedCorporation;
+            // Single-application lookup (officer "Licence Application Details" page, e.g. the zone
+            // approver / Medical Officer of Health): allowed when that application is inside the
+            // officer's own jurisdiction - the same check as the other per-application endpoints.
+            // The whole-list scoping below would refuse zone/ward-level officers.
+            var singleLookup = licenceApplicationId is int lookupId && lookupId > 0
+                && !Gba.TradeLicense.Api.Services.CallerAccess.IsAdmin(User);
+            if (singleLookup)
+            {
+                if (!await Gba.TradeLicense.Api.Services.CallerAccess.OfficerMayAccessAsync(
+                        con, User, licenceApplicationId!.Value, Gba.TradeLicense.Api.Services.ApplicationIdKind.Submitted))
+                    return StatusCode(StatusCodes.Status403Forbidden,
+                        new { message = "This application is outside your assigned jurisdiction." });
+                corporationId = null;
+            }
+            else
+            {
+                // Officers: only their assigned corporation(s), whatever the request says (admin unchanged)
+                var (scopedCorporation, deny) = Gba.TradeLicense.Api.Services.ReportScope.ResolveCorporation(
+                    await Gba.TradeLicense.Api.Services.ReportScope.GetAsync(con, User), corporationId);
+                if (deny != null)
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = deny });
+                corporationId = scopedCorporation;
+            }
 
             var parameters = new DynamicParameters();
 
@@ -87,6 +104,15 @@ namespace TradeLicence.API.Controllers
                 commandType: CommandType.StoredProcedure);
 
             var totalRecords = parameters.Get<int>("@TotalCount");
+
+            if (singleLookup)
+            {
+                // Never return anything but the application that passed the jurisdiction check
+                data = data.Where(r => r is IDictionary<string, object> row
+                    && row.FirstOrDefault(kv => string.Equals(kv.Key, "licenceApplicationID", StringComparison.OrdinalIgnoreCase)).Value is object v
+                    && Convert.ToInt64(v) == licenceApplicationId!.Value).ToList();
+                totalRecords = data.Count();
+            }
 
             return Ok(new
             {
