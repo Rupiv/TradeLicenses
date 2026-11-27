@@ -92,7 +92,7 @@ namespace Gba.TradeLicense.Api.Controllers
         {
             var trades = (await con.QueryAsync(
                 "usp_LicenceTradeDetails_CRUD",
-                new { Action = "GET_BY_APP_ID", LicenceApplicationID = draftLicenceApplicationId },
+                new { Action = "GET_BY_APP_ID", TempLicenceApplicationID = draftLicenceApplicationId },
                 commandType: CommandType.StoredProcedure)).ToList();
 
             var fees = new List<decimal>();
