@@ -208,4 +208,24 @@ public class LoginMasterController : ControllerBase
 
         return Ok(new { Deleted = true });
     }
+
+    /* ================= TOGGLE ACTIVE STATUS ================= */
+    [HttpPatch("{id:int}/toggle-status")]
+    public async Task<IActionResult> ToggleStatus(int id, [FromQuery] int updatedBy)
+    {
+        using var db = Db();
+
+        var newStatus = await db.ExecuteScalarAsync<string>(
+            "usp_LoginMaster_CRUD",
+            new
+            {
+                Action = "TOGGLE_STATUS",
+                loginID = id,
+                updatedby = (int)(Gba.TradeLicense.Api.Services.CallerAccess.CallerId(User) ?? updatedBy)
+            },
+            commandType: CommandType.StoredProcedure
+        );
+
+        return Ok(new { loginID = id, isActive = newStatus });
+    }
 }

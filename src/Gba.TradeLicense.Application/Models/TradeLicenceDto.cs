@@ -10,6 +10,7 @@ namespace Gba.TradeLicense.Application.Models
     {
         public string applicantName { get; set; }
         public string doorNumber { get; set; }
+        public string floorNumber { get; set; }
         public string address1 { get; set; }
         public string address2 { get; set; }
         public string address3 { get; set; }

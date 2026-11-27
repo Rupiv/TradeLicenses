@@ -1,0 +1,1 @@
+import{Rb as n,Xa as p,sb as o,tb as s}from"./chunk-SUYG5OK2.js";import"./chunk-XXUG4HYI.js";var r=class e{static \u0275fac=function(t){return new(t||e)};static \u0275cmp=p({type:e,selectors:[["app-support"]],decls:2,vars:0,template:function(t,i){t&1&&(o(0,"p"),n(1,"support works!"),s())},encapsulation:2})};export{r as Support};

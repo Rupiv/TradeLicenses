@@ -1,0 +1,1 @@
+import{S as o,e as t}from"./chunk-SUYG5OK2.js";var a=class e{loadingSubject=new t(!1);loading$=this.loadingSubject.asObservable();show(){this.loadingSubject.next(!0)}hide(){this.loadingSubject.next(!1)}static \u0275fac=function(i){return new(i||e)};static \u0275prov=o({token:e,factory:e.\u0275fac,providedIn:"root"})};export{a};

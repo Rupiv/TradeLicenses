@@ -312,9 +312,9 @@ namespace Gba.TradeLicense.Api.Controllers.Licence
             var rows = await con.QueryAsync<(long LicenceApplicationID, string CorporationName, string CorporationNativeName, int WardNo, string WardName)>(
                 @"SELECT la.licenceApplicationID, c.corporationName, c.corporationNativeName, gw.wardNo, gw.wardName
                   FROM dbo.Licence_Application la
-                  JOIN dbo.vw_LicenceCorporation v ON v.tradeLicenceID = la.tradeLicenceID AND v.locationStatus = 'CONFIRMED'
-                  JOIN dbo.Master_Corporation c ON c.corporationID = v.corporationID
-                  JOIN dbo.Master_GBAWard gw ON gw.gbaWardID = v.gbaWardID
+                  JOIN dbo.vw_LicenceCorporation v ON v.tradeLicenceID = la.tradeLicenceID
+                  JOIN dbo.Master_GBAWard gw ON gw.gbaWardID = COALESCE(v.gbaWardID, v.suggestedGbaWardID)
+                  JOIN dbo.Master_Corporation c ON c.corporationID = gw.corporationID
                   WHERE la.licenceApplicationID IN @ids",
                 new { ids = certificates.Select(c => c.LicenceApplicationID).Distinct().ToArray() });
 

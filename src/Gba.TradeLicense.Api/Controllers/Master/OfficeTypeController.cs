@@ -116,7 +116,7 @@ namespace Gba.TradeLicense.Api.Controllers
                 {
                     Action = "INSERT",
                     officeTypeName = dto.OfficeTypeName,
-                    isActive = dto.IsActive
+                    isActive = dto.IsActive ? "Y" : "N"
                 },
                 commandType: CommandType.StoredProcedure
             );
@@ -143,7 +143,7 @@ namespace Gba.TradeLicense.Api.Controllers
                     Action = "UPDATE",
                     officeTypeID = id,
                     officeTypeName = dto.OfficeTypeName,
-                    isActive = dto.IsActive
+                    isActive = dto.IsActive ? "Y" : "N"
                 },
                 commandType: CommandType.StoredProcedure
             );

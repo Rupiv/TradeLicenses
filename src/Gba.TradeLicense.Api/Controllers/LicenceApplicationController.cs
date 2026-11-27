@@ -88,7 +88,8 @@ public class LicenceApplicationController : ControllerBase
                 JathaStatus = dto.JathaStatus ?? "",
                 dto.DocsSubmitted,
                 ChallanNo = dto.ChallanNo ?? "",
-                dto.NoOfYearsApplied
+                dto.NoOfYearsApplied,
+                dto.IsParkingAreaProvided
             },
             commandType: CommandType.StoredProcedure
         );
@@ -149,7 +150,8 @@ public class LicenceApplicationController : ControllerBase
                 JathaStatus = dto.JathaStatus ?? "",
                 dto.DocsSubmitted,
                 ChallanNo = dto.ChallanNo ?? "",
-                dto.NoOfYearsApplied
+                dto.NoOfYearsApplied,
+                dto.IsParkingAreaProvided
             },
             transaction: transaction,
             commandType: CommandType.StoredProcedure

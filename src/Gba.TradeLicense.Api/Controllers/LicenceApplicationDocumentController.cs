@@ -138,7 +138,7 @@ namespace Gba.TradeLicense.Api.Controllers
 
             using var db = Db();
 
-            await db.ExecuteAsync(
+            var spResult = await db.QueryFirstOrDefaultAsync<dynamic>(
                 "usp_LicenceApplication_Document_CRUD",
                 new
                 {
@@ -161,6 +161,22 @@ namespace Gba.TradeLicense.Api.Controllers
                 },
                 commandType: CommandType.StoredProcedure
             );
+
+            if (!string.IsNullOrWhiteSpace(model.DocumentDescription))
+            {
+                var docId = model.ApplicationDocumentID
+                    ?? (spResult != null ? (int?)((IDictionary<string, object>)spResult).Values.FirstOrDefault() : null);
+                if (docId != null)
+                {
+                    try
+                    {
+                        await db.ExecuteAsync(
+                            "UPDATE Licence_Application_Document SET DocumentDescription = @Desc WHERE ApplicationDocumentID = @Id",
+                            new { Desc = model.DocumentDescription, Id = docId });
+                    }
+                    catch { /* column may not exist yet */ }
+                }
+            }
 
             return Ok(new
             {

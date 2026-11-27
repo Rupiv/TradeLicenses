@@ -14,6 +14,7 @@ namespace Gba.TradeLicense.Domain.Entities
         public IFormFile File { get; set; }
         public int LoginID { get; set; }
         public int? ApplicationDocumentID { get; set; }
+        public string? DocumentDescription { get; set; }
     }
 
 

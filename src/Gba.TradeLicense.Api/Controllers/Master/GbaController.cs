@@ -296,5 +296,60 @@ namespace Gba.TradeLicense.Api.Controllers.Master
                 return StatusCode(503, new { Message = "GBA user jurisdiction table is not created yet (run Database/GBA_UserJurisdiction.sql)." });
             }
         }
+
+        // ================= ADMIN: ASSIGN GBA LOCATION TO AN EXISTING LICENCE =================
+        public class AssignGbaLocationRequest
+        {
+            public int GbaWardID { get; set; }
+        }
+
+        [Gba.TradeLicense.Api.Services.AdminOnly]
+        [HttpPut("licence/{tradeLicenceId:long}/assign")]
+        public async Task<IActionResult> AssignGbaLocation(long tradeLicenceId, [FromBody] AssignGbaLocationRequest req)
+        {
+            if (tradeLicenceId <= 0 || req == null || req.GbaWardID <= 0)
+                return BadRequest(new { Message = "tradeLicenceId and gbaWardID are required." });
+
+            int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var actor);
+
+            using var con = new SqlConnection(_connStr);
+            await con.OpenAsync();
+
+            var ward = await con.QueryFirstOrDefaultAsync<(int CorporationID, int GbaZoneID, int? LegacyWardID, int? MohID, bool IsActive)>(
+                @"SELECT corporationID, gbaZoneID, legacyWardID, mohID, isActive
+                  FROM dbo.Master_GBAWard WHERE gbaWardID = @gbaWardId",
+                new { gbaWardId = req.GbaWardID });
+
+            if (ward.CorporationID == 0)
+                return BadRequest(new { Message = "Selected GBA ward does not exist." });
+            if (!ward.IsActive)
+                return BadRequest(new { Message = "Selected GBA ward is not active." });
+
+            var licenceExists = await con.ExecuteScalarAsync<int>(
+                "SELECT COUNT(1) FROM dbo.Licence_Master WHERE tradeLicenceID = @tradeLicenceId",
+                new { tradeLicenceId });
+            if (licenceExists == 0)
+                return NotFound(new { Message = "Licence not found." });
+
+            try
+            {
+                await con.ExecuteAsync(
+                    @"IF EXISTS (SELECT 1 FROM dbo.Licence_GBALocation WHERE tradeLicenceID = @tradeLicenceId)
+                          UPDATE dbo.Licence_GBALocation
+                             SET corporationID = @corporationId, gbaWardID = @gbaWardId,
+                                 source = 'ADMIN', updatedBy = @actor, updatedDate = GETDATE()
+                           WHERE tradeLicenceID = @tradeLicenceId
+                      ELSE
+                          INSERT INTO dbo.Licence_GBALocation (tradeLicenceID, corporationID, gbaWardID, source, updatedBy)
+                          VALUES (@tradeLicenceId, @corporationId, @gbaWardId, 'ADMIN', @actor);",
+                    new { tradeLicenceId, corporationId = ward.CorporationID, gbaWardId = req.GbaWardID, actor });
+
+                return Ok(new { Saved = true, CorporationID = ward.CorporationID, GbaWardID = req.GbaWardID });
+            }
+            catch (SqlException ex) when (ex.Number == 208)
+            {
+                return StatusCode(503, new { Message = "GBA location tables are not created yet (run Database/GBA_Corporation_Ward_Migration.sql)." });
+            }
+        }
     }
 }
