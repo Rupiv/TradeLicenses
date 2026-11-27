@@ -35,5 +35,7 @@
 		<None Remove="wwwroot\uploads\**" />
 		<Content Remove="Uploads\**" />
 		<None Remove="Uploads\**" />
+		<Content Remove="logs\**" />
+		<None Remove="logs\**" />
 	</ItemGroup>
 </Project>
